@@ -14,8 +14,8 @@ function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/about", label: "About" },
-    { href: "/how-it-works", label: "How it Works" },
+    { href: "/about", label: "About GoalLine" },
+    { href: "/how-it-works", label: "How It Works" },
     { href: "/contact", label: "Contact" },
   ];
 

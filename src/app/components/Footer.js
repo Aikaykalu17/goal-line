@@ -74,7 +74,10 @@ function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="" className="text-(--white) text-xs cursor-pointer">
+                <Link
+                  href="/privacy"
+                  className="text-(--white) text-xs cursor-pointer"
+                >
                   Privacy Policy
                 </Link>
               </li>
