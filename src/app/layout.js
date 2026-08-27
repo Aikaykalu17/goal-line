@@ -38,10 +38,7 @@ export default function RootLayout({ children }) {
         </a>
         <HeaderWrapper />
 
-        <main
-          id="main-content"
-          className="w-full flex flex-col flex-1 mt-18 gap-8"
-        >
+        <main id="main-content" className="w-full flex flex-col flex-1 mt-18">
           {children}
         </main>
       </body>

@@ -23,7 +23,7 @@ function Hero() {
         </p>
         <Link
           href="/booking"
-          className="px-8 py-3 bg-(--primary) text-(--white) rounded-sm flex items-center gap-4 w-max transition-all duration-300 ease-out hover:translate-y-1 cursor-pointer hover:text-(--text)"
+          className="px-8 py-3 bg-(--primary) text-xs text-(--white) rounded-sm flex items-center gap-4 w-max transition-all duration-300 ease-out hover:translate-y-1 cursor-pointer hover:text-(--text)"
         >
           Book your slot now{" "}
           <ArrowRight color="var(--white)" size={20} aria-hidden="true" />
