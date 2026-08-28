@@ -12,31 +12,31 @@ function About() {
   return (
     <section className="w-full  py-8">
       <div className="w-[90%] mx-auto flex flex-col gap-8 md:grid md:grid-cols-2">
-        <div className="flex flex-col gap-8 justify-center">
+        <div className="flex flex-col gap-6 justify-center">
           <h2 className="text-(--text) font-bold">About GoalLIne Turf</h2>
-          <p className="text-(--text) text-xs">
+          <p className="text-(--muted) text-xs font-bold">
             GoalLine Turf is a premium 5-a-side football <br /> turf located in
             a secure environment with top <br /> facilities. Whether it&apos;s a
             friendly match <br /> or regular training, we&apos;ve got you
             covered.
           </p>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 ">
+            <div className="flex items-center gap-2 shadow p-4">
               <FaLeaf color="var(--text)" size={16} aria-hidden="true" />
               <p className="text-(--text) text-xs">Well maintained turf</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shadow p-4">
               <FaShieldAlt color="var(--text)" size={16} aria-hidden="true" />
               <p className="text-(--text) text-xs">Secure environment</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shadow p-4">
               <FaShower color="var(--text)" size={16} aria-hidden="true" />
               <p className="text-(--text) text-xs">Clean changing rooms</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shadow p-4">
               <FaParking color="var(--text)" size={16} aria-hidden="true" />
               <p className="text-(--text) text-xs">Ample parking space</p>
             </div>

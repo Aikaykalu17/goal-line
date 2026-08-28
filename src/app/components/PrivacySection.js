@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-function PrivacySection({ id, title, description, icon: Icon }) {
+function PrivacySection({
+  id,
+  title,
+  description,
+  icon: Icon,
+  total,
+  variant = "default",
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   function toggleOpen() {
@@ -42,13 +49,33 @@ function PrivacySection({ id, title, description, icon: Icon }) {
 
       {/* Desktop expanded */}
       <div className="hidden md:block">
-        <div className="flex flex-row gap-4">
-          {Icon}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-xs text-(--text) font-bold">{title}</h3>
-            <p className="text-xs text-(--muted) font-bold">{description}</p>
+        {variant === "terms" ? (
+          // Terms & Conditions layout with number + connector line
+          <div className="flex flex-row gap-4">
+            <div className="relative flex flex-col items-center">
+              <span className="bg-(--primary) text-(--white) flex items-center justify-center w-6 h-6 font-bold rounded-full text-xs">
+                {id}
+              </span>
+              {/* vertical connector line */}
+              {id < total && (
+                <span className="absolute top-6 left-1/2 -translate-x-1/2 w-px h-full bg-(--primary)" />
+              )}
+            </div>
+            <div className="flex flex-col gap-4 ">
+              <h3 className="text-xs text-(--text) font-bold">{title}</h3>
+              <p className="text-xs text-(--muted) font-bold">{description}</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          // Default layout with icon (Privacy Policy, Booking Policy, etc.)
+          <div className="flex flex-row gap-4 shadow p-6 h-full">
+            {Icon}
+            <div className="flex flex-col gap-2">
+              <h3 className="text-xs text-(--text) font-bold">{title}</h3>
+              <p className="text-xs text-(--muted) font-bold">{description}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

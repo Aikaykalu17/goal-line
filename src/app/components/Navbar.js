@@ -41,7 +41,7 @@ function Navbar() {
       <div className="px-6 flex justify-between items-center w-full">
         <div className="z-50   flex justify-between items-center">
           <Image
-            src="/logo.webp"
+            src={open ? "/whiteLogo.webp" : "/logo.webp"}
             alt="Goal Line Turf logo"
             width={150}
             height={300}

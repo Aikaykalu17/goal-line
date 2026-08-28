@@ -16,6 +16,8 @@ export default function HeaderWrapper() {
     "/contact",
     "/how-it-works",
     "/privacy",
+    "/terms",
+    "/booking-policy",
   ].includes(location);
 
   return (

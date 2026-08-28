@@ -12,7 +12,7 @@ const privacy = [
     title: "Information We Collect",
     description:
       "We collect personal information such as your name, email address, phone number and booking details.",
-    icon: <FaDatabase size={50} color="var(--primary)" aria-hidden="true" />, // 👈 JSX element
+    icon: <FaDatabase size={50} color="var(--primary)" aria-hidden="true" />,
   },
   {
     id: 2,

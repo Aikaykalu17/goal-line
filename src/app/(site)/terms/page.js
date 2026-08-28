@@ -1,20 +1,19 @@
-import PrivacyCard from "@/app/components/PrivacyCard";
 import SectionBanner from "@/app/components/SectionBanner";
+import TermsCard from "@/app/components/TermsCard";
 
 function Page() {
   return (
-    <section className="pb-4 flex flex-col gap-4">
+    <section className="pb-8 flex flex-col gap-8">
       <SectionBanner backgroundImage="/images/diffPitch.webp">
         <h2 className="text-(--white) font-bold text-2xl md:text-4xl">
-          Privacy Policy
+          Terms & Conditions
         </h2>
         <p className="text-(--white) text-base font-bold">
-          We&apos;re committed to protecting your privacy and personal
-          information.
+          Please read our terms and condtions carefully before booking.
         </p>
       </SectionBanner>
-      <div className="flex flex-col gap-4 w-[90%] mx-auto">
-        <PrivacyCard />
+      <div className="w-[90%] mx-auto">
+        <TermsCard />
       </div>
     </section>
   );

@@ -1,20 +1,21 @@
-import privacy from "@/data/privacy";
+import terms from "@/data/terms";
 import PrivacySection from "./PrivacySection";
 
-function PrivacyCard() {
+function TermsCard() {
   return (
-    <div className="flex flex-col md:grid md:grid-cols-2 gap-4">
-      {privacy.map((item) => (
+    <div className="flex flex-col gap-4 w-[90%] mx-auto">
+      {terms.map((item, index) => (
         <PrivacySection
           key={item.id}
           id={item.id}
           title={item.title}
           description={item.description}
-          icon={item.icon}
+          variant="terms"
+          total={terms.length} //
         />
       ))}
     </div>
   );
 }
 
-export default PrivacyCard;
+export default TermsCard;

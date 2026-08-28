@@ -59,17 +59,26 @@ function Footer() {
             <h2 className="text-(--white) font-bold">Support</h2>
             <ul className="flex flex-col">
               <li>
-                <Link href="" className="text-(--white) text-xs cursor-pointer">
+                <Link
+                  href="contact"
+                  className="text-(--white) text-xs cursor-pointer"
+                >
                   FAQs
                 </Link>
               </li>
               <li>
-                <Link href="" className="text-(--white) text-xs cursor-pointer">
+                <Link
+                  href="/booking-policy"
+                  className="text-(--white) text-xs cursor-pointer"
+                >
                   Booking Policy
                 </Link>
               </li>
               <li>
-                <Link href="" className="text-(--white) text-xs cursor-pointer">
+                <Link
+                  href="/terms"
+                  className="text-(--white) text-xs cursor-pointer"
+                >
                   Terms & Conditions
                 </Link>
               </li>

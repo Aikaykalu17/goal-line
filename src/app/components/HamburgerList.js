@@ -12,14 +12,14 @@ function HamburgerList({ navItems, onClose }) {
 
         return (
           <li key={item.id} className="flex items-center gap-6">
-            <item.icon size={20} color={"var(--white)"} />
+            <item.icon size={25} color={"var(--white)"} />
             <Link
               href={item.href}
               onClick={onClose}
               aria-current={isActive ? "page" : undefined}
               className={
                 isActive
-                  ? "text-(--white) font-bold text-xs underline"
+                  ? "text-(--white) font-bold text-xs"
                   : "text-(--white) text-xs"
               }
             >

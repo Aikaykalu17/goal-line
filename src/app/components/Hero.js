@@ -11,7 +11,7 @@ function Hero() {
         backgroundSize: "cover",
       }}
     >
-      <div className="w-[90%] h-full mx-auto flex flex-col justify-center gap-2">
+      <div className="w-[90%] h-full mx-auto flex flex-col justify-center gap-4">
         <h1 className="text-(--white) text-2xl font-bold xl:text-5xl">
           Play. Book. <br />
           Enjoy Football.

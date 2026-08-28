@@ -14,7 +14,7 @@ export default function Reveal({ children, direction = "up" }) {
       variants={variants[direction]}
       initial="hidden"
       whileInView="show"
-      transition={{ duration: 0.8, ease: "easeOut" }}
+      transition={{ duration: 0.8, ease: [0.42, 0, 1, 1] }}
       viewport={{ once: true }}
     >
       {children}
