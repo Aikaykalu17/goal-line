@@ -1,5 +1,11 @@
 import PrivacyCard from "@/app/components/PrivacyCard";
+import Reveal from "@/app/components/Reveal";
 import SectionBanner from "@/app/components/SectionBanner";
+
+export const metadata = {
+  title: "Privacy Policy - GoalLine Turf",
+  description: "Read our privacy policy.",
+};
 
 function Page() {
   return (
@@ -13,9 +19,12 @@ function Page() {
           information.
         </p>
       </SectionBanner>
-      <div className="flex flex-col gap-4 w-[90%] mx-auto">
-        <PrivacyCard />
-      </div>
+
+      <Reveal>
+        <div className="flex flex-col gap-4 w-[90%] mx-auto">
+          <PrivacyCard />
+        </div>
+      </Reveal>
     </section>
   );
 }

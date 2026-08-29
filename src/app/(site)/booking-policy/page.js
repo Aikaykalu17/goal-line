@@ -1,5 +1,11 @@
 import BookingCard from "@/app/components/BookingCard";
+import Reveal from "@/app/components/Reveal";
 import SectionBanner from "@/app/components/SectionBanner";
+
+export const metadata = {
+  title: "Booking Policy - GoalLine Turf",
+  description: "Read our booking rules and guidelines.",
+};
 
 function Page() {
   return (
@@ -12,9 +18,12 @@ function Page() {
           Important Information about our booking rules and cancellation terms.
         </p>
       </SectionBanner>
-      <div className="w-[90%] mx-auto">
-        <BookingCard />
-      </div>
+
+      <Reveal>
+        <div className="w-[90%] mx-auto">
+          <BookingCard />
+        </div>
+      </Reveal>
     </section>
   );
 }

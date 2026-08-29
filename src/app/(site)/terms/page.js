@@ -1,5 +1,11 @@
+import Reveal from "@/app/components/Reveal";
 import SectionBanner from "@/app/components/SectionBanner";
 import TermsCard from "@/app/components/TermsCard";
+
+export const metadata = {
+  title: "Terms & Conditions - GoalLine Turf",
+  description: "Read our terms and conditions.",
+};
 
 function Page() {
   return (
@@ -12,9 +18,12 @@ function Page() {
           Please read our terms and condtions carefully before booking.
         </p>
       </SectionBanner>
-      <div className="w-[90%] mx-auto">
-        <TermsCard />
-      </div>
+
+      <Reveal>
+        <div className="w-[90%] mx-auto">
+          <TermsCard />
+        </div>
+      </Reveal>
     </section>
   );
 }

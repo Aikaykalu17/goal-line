@@ -8,6 +8,11 @@ import {
   FaClock,
 } from "react-icons/fa";
 
+export const metadata = {
+  title: "Contact Us - GoalLine Turf",
+  description: "Contact GoalLine Turf.",
+};
+
 function Page() {
   return (
     <section className="w-full flex flex-col gap-8 pb-4">

@@ -1,6 +1,12 @@
 import ProcessList from "@/app/components/ProcessList";
+import Reveal from "@/app/components/Reveal";
 import { ArrowRight, Trophy } from "lucide-react";
 import Link from "next/link";
+
+export const metadata = {
+  title: "How It Works - GoalLine Turf",
+  description: "Read our how it works.",
+};
 
 function Page() {
   return (
@@ -14,18 +20,24 @@ function Page() {
             Book your game in just three easy steps.
           </p>
         </div>
-        <ProcessList />
-        <div className="flex flex-row bg-green-100 rounded-lg w-full p-8 items-center gap-8 ">
-          <Trophy size={50} aria-hidden="true" color="var(--primary-dark)" />
-          <div>
-            <p className="text-(--primary-dark) font-bold">
-              That&apos;s it! You&apos;re all set.
-            </p>
-            <p className="text-(--muted) text-xs">
-              Focus on the game, we&apos;ll handle the rest.
-            </p>
+
+        <Reveal>
+          <ProcessList />
+        </Reveal>
+
+        <Reveal>
+          <div className="flex flex-row bg-green-100 rounded-lg w-full p-8 items-center gap-8 ">
+            <Trophy size={50} aria-hidden="true" color="var(--primary-dark)" />
+            <div>
+              <p className="text-(--primary-dark) font-bold">
+                That&apos;s it! You&apos;re all set.
+              </p>
+              <p className="text-(--muted) text-xs">
+                Focus on the game, we&apos;ll handle the rest.
+              </p>
+            </div>
           </div>
-        </div>
+        </Reveal>
 
         <div
           className="w-full h-[40vh] md:h-[50vh] lg:h-[30vh] flex flex-col  justify-center px-8 gap-6 text-(--white) rounded-xl"

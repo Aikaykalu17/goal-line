@@ -3,7 +3,7 @@ import StepsCard from "./StepsCard";
 
 export default function StepsList() {
   return (
-    <section className="w-full flex flex-col items-center gap-4">
+    <section className="w-full flex flex-col items-center gap-4 border-b border-gray-200 pb-8">
       <div className="text-center">
         <h2 className="text-(--text) font-extrabold">How it Works</h2>
         <p className="text-(--muted) text-xs font-bold">

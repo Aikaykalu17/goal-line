@@ -15,13 +15,16 @@ function FaqList({ faqs }) {
         const isOpen = openId === faq.id;
 
         return (
-          <div key={faq.id} className="border border-slate-200 p-4">
+          <div
+            key={faq.id}
+            className="border border-slate-200 p-4 cursor-pointer"
+          >
             <button
               type="button"
               onClick={() => toggleFaq(faq.id)}
               aria-expanded={isOpen}
               aria-controls={`faq-answer-${faq.id}`}
-              className="w-full flex justify-between items-center text-xs font-semibold text-left"
+              className="w-full flex justify-between items-center text-xs font-semibold text-left cursor-pointer"
             >
               {faq.question}
               {isOpen ? <X size={14} /> : <Plus size={14} />}

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { FaFacebook, FaWhatsapp, FaInstagram } from "react-icons/fa";
 
@@ -8,7 +9,17 @@ function Footer() {
     <footer className="w-full bg-(--forest) flex flex-col">
       <div className="w-[90%] mx-auto flex flex-col gap-8 py-8 md:flex md:flex-row md:justify-between">
         <div className="flex flex-col gap-4">
-          <h2 className="text-(--white) font-bold">GoalLine Turf</h2>
+          <Image
+            src="/whiteLogo.webp"
+            alt="GoalLine Turf"
+            width={150}
+            height={300}
+            priority
+            loading="eager"
+            sizes="(max-width: 768px) 100px, 120px"
+            style={{ objectFit: "contain" }}
+          />
+
           <p className="text-(--white) text-xs">The best place to play.</p>
           <p className="text-(--white) text-xs">
             Book your slot and enjoy the beautiful game.
