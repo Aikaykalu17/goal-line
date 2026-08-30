@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import HamburgerList from "./HamburgerList";
 import { FaArrowRight } from "react-icons/fa";
@@ -14,6 +16,7 @@ function Hamburger({ isOpen, onClose, navItems }) {
 
       <Link
         href="/booking"
+        onClick={() => dispatch({ type: "RESET" })}
         className="px-12 py-4 bg-(--white) text-(--primary) rounded-sm text-center w-max self-center text-xs flex items-center gap-4"
       >
         Book Now{" "}

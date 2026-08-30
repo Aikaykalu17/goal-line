@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -23,6 +25,7 @@ function Hero() {
         </p>
         <Link
           href="/booking"
+          // onClick={() => dispatch({ type: "RESET" })}
           className="px-8 py-3 bg-(--primary) text-xs text-(--white) rounded-sm flex items-center gap-4 w-max transition-all duration-300 ease-out hover:translate-y-1 cursor-pointer hover:text-(--text)"
         >
           Book your slot now{" "}

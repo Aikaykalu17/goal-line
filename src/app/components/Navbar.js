@@ -77,6 +77,7 @@ function Navbar() {
         </nav>
         <Link
           href="/booking"
+          onClick={() => dispatch({ type: "RESET" })}
           className="hidden md:block landscape:flex py-4 px-8 rounded-lg bg-(--primary)  text-xs text-(--white) font-bold cursor-pointer border md:hover:border-none md:hover:text-(--text) transition-all duration-300 ease-out hover:translate-y-1"
         >
           Book Now

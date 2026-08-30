@@ -15,16 +15,26 @@ import {
   subMonths,
   startOfDay,
 } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import {
+  fetchBookingsForMonth,
+  getFullyBookedDays,
+} from "@/utils/availability";
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 export default function Calendar({ selectedDate, onSelectDate }) {
   const [viewDate, setViewDate] = useState(new Date());
+  const [fullyBookedDays, setFullyBookedDays] = useState(new Set());
   const today = startOfDay(new Date());
 
-  // Full grid range: from the Monday of the first week to the Sunday of the last week
+  useEffect(() => {
+    fetchBookingsForMonth(viewDate).then((bookings) => {
+      setFullyBookedDays(getFullyBookedDays(bookings));
+    });
+  }, [viewDate]);
+
   const gridStart = startOfWeek(startOfMonth(viewDate), { weekStartsOn: 1 });
   const gridEnd = endOfWeek(endOfMonth(viewDate), { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
@@ -37,13 +47,13 @@ export default function Calendar({ selectedDate, onSelectDate }) {
     setViewDate((prev) => addMonths(prev, 1));
   }
 
-  function handleSelect(day) {
-    if (isBefore(day, today)) return;
+  function handleSelect(day, isFullyBooked) {
+    if (isBefore(day, today) || isFullyBooked) return;
     onSelectDate(day);
   }
 
   return (
-    <div className="w-full max-w-sm rounded-xl border border-(--border) bg-white p-4">
+    <div className="w-full max-w-sm rounded-xl border border-(--border) bg-white p-4 md:place-self-end">
       <p className="mb-3 text-sm font-semibold text-(--text)">Select Date</p>
 
       {/* Month navigation */}
@@ -83,19 +93,23 @@ export default function Calendar({ selectedDate, onSelectDate }) {
         {days.map((day) => {
           const past = isBefore(day, today);
           const outsideMonth = !isSameMonth(day, viewDate);
+          const dayKey = format(day, "yyyy-MM-dd");
+          const isFullyBooked = fullyBookedDays.has(dayKey);
           const selected = selectedDate && isSameDay(day, selectedDate);
           const todayFlag = isToday(day);
+          const disabled = past || isFullyBooked;
 
           return (
             <button
               key={day.toISOString()}
               type="button"
-              disabled={past}
-              onClick={() => handleSelect(day)}
+              disabled={disabled}
+              onClick={() => handleSelect(day, isFullyBooked)}
+              title={isFullyBooked ? "Fully booked" : undefined}
               className={`
                 aspect-square rounded-full text-sm transition-colors
-                ${past ? "cursor-not-allowed text-gray-300" : "cursor-pointer text-(--text) hover:bg-(--primary)/10"}
-                ${outsideMonth && !past ? "text-gray-300" : ""}
+                ${disabled ? "cursor-not-allowed text-gray-300" : "cursor-pointer text-(--text) hover:bg-(--primary)/10"}
+                ${outsideMonth && !disabled ? "text-gray-300" : ""}
                 ${todayFlag && !selected ? "font-semibold text-(--primary)" : ""}
                 ${selected ? "bg-(--primary) text-white font-semibold" : ""}
               `}
