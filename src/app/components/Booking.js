@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import confetti from "canvas-confetti";
+import { supabase } from "@/lib/supabaseClient";
+
+import { differenceInHours, format, parse } from "date-fns";
+
+import { FaArrowRight } from "react-icons/fa";
+
 import Calendar from "@/app/components/Calendar";
 import SelectTime from "@/app/components/SelectTime";
 import {
@@ -9,18 +15,11 @@ import {
   isSlotAvailable,
   generateAllSlots,
 } from "@/utils/availability";
-import { differenceInHours, format, parse } from "date-fns";
-import Link from "next/link";
-import {
-  FaArrowRight,
-  FaCheck,
-  FaCheckCircle,
-  FaCheckDouble,
-  FaCheckSquare,
-  FaHome,
-} from "react-icons/fa";
-import { supabase } from "@/lib/supabaseClient";
+import formatCurrency from "../../utils/formatCurrency";
+
 import PromoCodeInput from "./PromoCode";
+import SpinnerMini from "./SpinnerMini";
+import BookingConfirmation from "./BookingConfirmation";
 
 // ✅ Initial state
 const initialState = {
@@ -39,6 +38,7 @@ const initialState = {
   notes: "",
   promoCode: "",
   discountApplied: 0,
+  errorMessage: "",
 };
 
 // ✅ Reducer
@@ -54,6 +54,7 @@ function bookingReducer(state, action) {
         selectedDate: action.date,
         startTime: null,
         endTime: null,
+        errorMessage: "",
       };
     case "SET_USER":
       return { ...state, ...action.payload };
@@ -80,6 +81,8 @@ function bookingReducer(state, action) {
       return { ...state, step: state.step + 1 };
     case "PREV_STEP":
       return { ...state, step: state.step - 1 };
+    case "SET_ERROR":
+      return { ...state, errorMessage: action.message, step: state.step - 1 };
     case "RESET":
       return initialState;
 
@@ -90,6 +93,7 @@ function bookingReducer(state, action) {
 
 export default function Booking() {
   const [state, dispatch] = useReducer(bookingReducer, initialState);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -108,7 +112,7 @@ export default function Booking() {
   const discount = state.discountApplied;
   const total = subtotal - discount;
 
-  // ✅ Availability effect
+  //  Availability effect
   useEffect(() => {
     if (!state.selectedDate) return; // guard
 
@@ -126,7 +130,7 @@ export default function Booking() {
     }
   }, [state.selectedDate]);
 
-  // ✅ Supabase insert function
+  // Supabase insert function
   async function confirmBooking() {
     const startDateTime = parse(state.startTime, "hh:mm a", state.selectedDate);
     const endDateTime = parse(state.endTime, "hh:mm a", state.selectedDate);
@@ -140,11 +144,13 @@ export default function Booking() {
       );
 
       if (!stillAvailable) {
-        alert(
-          "Sorry, this time slot was just booked by someone else. Please pick another time.",
-        );
+        dispatch({
+          type: "SET_ERROR",
+          message:
+            "Sorry, this time slot was just booked by someone else. Please pick another time.",
+        });
         dispatch({ type: "SET_BOOKINGS", bookings: latestBookings, slots: [] });
-        dispatch({ type: "PREV_STEP" }); // send them back to pick a new time
+        dispatch({ type: "PREV_STEP" });
         return;
       }
 
@@ -176,7 +182,7 @@ export default function Booking() {
       }
 
       dispatch({ type: "CONFIRM_BOOKING", id: data[0].id, booking: data[0] });
-      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+      confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
     } catch (err) {
       console.error("Unexpected error:", err);
     }
@@ -336,12 +342,13 @@ export default function Booking() {
             <PromoCodeInput
               promoCode={state.promoCode}
               discountApplied={state.discountApplied}
+              subtotal={subtotal}
               dispatch={dispatch}
             />
 
             <button
               type="submit"
-              className="bg-(--primary) text-white px-8 py-3.5 rounded text-xs flex items-center gap-2 cursor-pointer transition-all duration-300 ease-out hover:translate-x-1 "
+              className="bg-(--primary) text-white px-8 py-3.5 rounded text-xs flex items-center gap-2 cursor-pointer transition-all duration-300 ease-out hover:translate-x-1"
             >
               Continue to Review
               <FaArrowRight color="var(--white)" aria-hidden="true" size={14} />
@@ -352,6 +359,11 @@ export default function Booking() {
       {/* Step 3: Review Booking */}
       {state.step === 3 && (
         <div className="space-y-4 w-full shadow p-4 flex flex-col">
+          {state.errorMessage && (
+            <p className="text-(--error) text-sm font-semibold mb-2">
+              {state.errorMessage}
+            </p>
+          )}
           <h3 className="font-extrabold text-lg text-(--primary-dark)">
             Booking Summary
           </h3>
@@ -378,108 +390,137 @@ export default function Booking() {
           </p>
 
           <p className="font-bold text-sm">
-            Rate: <span className="font-extrabold">₦{ratePerHour}</span>/hr
+            Rate:{" "}
+            <span className="font-extrabold">
+              ₦{formatCurrency(ratePerHour)}
+            </span>
+            /hr
           </p>
           <p className="font-bold text-sm">
-            Subtotal: <span className="font-extrabold">₦{subtotal}</span>
+            Subtotal:{" "}
+            <span className="font-extrabold">₦{formatCurrency(subtotal)}</span>
           </p>
           <p className="font-bold text-sm">
             Discount:{" "}
-            <span className="font-extrabold">–₦{state.discountApplied}</span>
+            <span className="font-extrabold">
+              –₦{formatCurrency(state.discountApplied)}
+            </span>
           </p>
           <p className="text-(--primary) font-bold text-sm">
             Total:{" "}
             <span className="font-extrabold">
-              ₦{subtotal - state.discountApplied}
+              ₦{formatCurrency(subtotal - state.discountApplied)}
             </span>
           </p>
           <button
-            onClick={confirmBooking}
+            onClick={async () => {
+              setIsConfirming(true);
+              await confirmBooking();
+              setIsConfirming(false);
+            }}
+            disabled={isConfirming}
             className="flex items-center self-center-safe gap-2 bg-(--primary) text-(--white) text-xs py-3 px-8 rounded-sm transition-all duration-300 ease-out hover:translate-x-1"
           >
-            Confirm Booking
-            <FaArrowRight color="var(--white)" aria-hidden="true" size={14} />
+            {isConfirming ? (
+              <SpinnerMini />
+            ) : (
+              <>
+                Confirm Booking
+                <FaArrowRight
+                  color="var(--white)"
+                  aria-hidden="true"
+                  size={14}
+                />
+              </>
+            )}
           </button>
         </div>
       )}
 
       {/* Step 4: Confirmation */}
       {state.step === 4 && state.booking && (
-        <div className="space-y-4 text-center relative shadow p-6 rounded flex flex-col items-center">
-          <FaCheckCircle color="var(--primary)" size={50} aria-hidden="true" />
-          <h2 className="text-xl font-bold text-(--primary)">
-            Booking Confirmed!
-          </h2>
-          <p>Your pitch has been successfully booked.</p>
+        <BookingConfirmation
+          booking={state.booking}
+          bookingId={state.bookingId}
+        />
+        // <div className="space-y-4 text-center relative shadow p-6 rounded flex flex-col items-center">
+        //   <FaCheckCircle color="var(--primary)" size={50} aria-hidden="true" />
+        //   <h2 className="text-xl font-bold text-(--primary)">
+        //     Booking Confirmed!
+        //   </h2>
+        //   <p>Your pitch has been successfully booked.</p>
 
-          <p className="text-sm font-bold flex flex-col">
-            Booking ID:{" "}
-            <span className="font-extrabold">{state.bookingId}</span>
-          </p>
+        //   <p className="text-sm font-bold flex flex-col">
+        //     Booking ID:{" "}
+        //     <span className="font-extrabold">{state.bookingId}</span>
+        //   </p>
 
-          <p className="text-sm font-bold">
-            Date:{" "}
-            <span className="font-extrabold">
-              {format(new Date(state.booking.start_at), "EEEE, MMMM d, yyyy")}
-            </span>
-          </p>
+        //   <p className="text-sm font-bold">
+        //     Date:{" "}
+        //     <span className="font-extrabold">
+        //       {format(new Date(state.booking.start_at), "EEEE, MMMM d, yyyy")}
+        //     </span>
+        //   </p>
 
-          <p className="text-sm font-bold">
-            Time:{" "}
-            <span className="font-extrabold">
-              {format(new Date(state.booking.start_at), "h:mm a")} –{" "}
-              {format(new Date(state.booking.end_at), "h:mm a")}
-            </span>
-          </p>
+        //   <p className="text-sm font-bold">
+        //     Time:{" "}
+        //     <span className="font-extrabold">
+        //       {format(new Date(state.booking.start_at), "h:mm a")} –{" "}
+        //       {format(new Date(state.booking.end_at), "h:mm a")}
+        //     </span>
+        //   </p>
 
-          <p className="text-sm font-bold">
-            Duration:{" "}
-            <span className="font-extrabold">
-              {(new Date(state.booking.end_at) -
-                new Date(state.booking.start_at)) /
-                (1000 * 60 * 60)}{" "}
-              {(new Date(state.booking.end_at) -
-                new Date(state.booking.start_at)) /
-                (1000 * 60 * 60) ===
-              1
-                ? "hour"
-                : "hours"}
-            </span>
-          </p>
+        //   <p className="text-sm font-bold">
+        //     Duration:{" "}
+        //     <span className="font-extrabold">
+        //       {(new Date(state.booking.end_at) -
+        //         new Date(state.booking.start_at)) /
+        //         (1000 * 60 * 60)}{" "}
+        //       {(new Date(state.booking.end_at) -
+        //         new Date(state.booking.start_at)) /
+        //         (1000 * 60 * 60) ===
+        //       1
+        //         ? "hour"
+        //         : "hours"}
+        //     </span>
+        //   </p>
 
-          <p className="text-sm font-bold">
-            Total Amount:{" "}
-            <span className="font-extrabold">₦{state.booking.total}</span>
-          </p>
-          <p className="text-sm font-bold">
-            Promo Code:{" "}
-            <span className="font-extrabold">
-              {state.booking.promo_code || "None"}
-            </span>
-          </p>
+        //   <p className="text-sm font-bold">
+        //     Total Amount:{" "}
+        //     <span className="font-extrabold">₦{state.booking.total}</span>
+        //   </p>
+        //   <p className="text-sm font-bold">
+        //     Promo Code:{" "}
+        //     <span className="font-extrabold">
+        //       {state.booking.promo_code || "None"}
+        //     </span>
+        //   </p>
 
-          <p className="text-sm font-bold">
-            Discount Applied:{" "}
-            <span className="font-extrabold">₦{state.booking.discount}</span>
-          </p>
+        //   <p className="text-sm font-bold">
+        //     Discount Applied:{" "}
+        //     <span className="font-extrabold">₦{state.booking.discount}</span>
+        //   </p>
 
-          <div className="bg-(--warning) p-2 rounded">
-            <p className="font-semibold">Payment on Arrival</p>
-            <p>Pay when you arrive at the turf.</p>
-          </div>
+        //   <div className="bg-(--warning) p-2 rounded w-full">
+        //     <p className="font-semibold">Payment on Arrival</p>
+        //     <p className="text-xs">
+        //       Please pay the total amount when you arrive at the turf.
+        //     </p>
+        //   </div>
 
-          <p className="text-sm">
-            We’ve sent a confirmation email to {state.booking.user_email}
-          </p>
+        //   <p className="text-sm">
+        //     We’ve sent a confirmation email to{" "}
+        //     <span className="font-extrabold">{state.booking.user_email}</span>
+        //   </p>
 
-          <Link
-            href="/"
-            className="bg-(--primary) text-(--white) px-8 py-3.5 flex items-center gap-2 rounded text-xs"
-          >
-            Back to Home
-            <FaHome color="var(--white)" size={20} aria-hidden="true" />
-          </Link>
-        </div>
+        //   <Link
+        //     href="/"
+        //     className="bg-(--primary) text-(--white) px-8 py-3.5 flex items-center gap-2 rounded text-xs transition-all duration-300 ease-out hover:translate-x-1"
+        //   >
+        //     Back to Home
+        //     <FaHome color="var(--white)" size={20} aria-hidden="true" />
+        //   </Link>
+        // </div>
       )}
     </div>
   );

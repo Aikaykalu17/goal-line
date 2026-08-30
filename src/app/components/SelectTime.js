@@ -139,7 +139,7 @@ export default function SelectTime({
         </label>
         <Listbox value={startTime} onChange={handleStartChange}>
           <div className="relative mt-1">
-            <ListboxButton className="flex items-center justify-between border rounded p-2 w-full text-(--text)">
+            <ListboxButton className="flex items-center justify-between border rounded p-2 w-full text-(--text) text-xs">
               <span>{startTime || "Select start time"}</span>
               <FaChevronDown size={12} className="text-gray-400" />
             </ListboxButton>
@@ -156,7 +156,7 @@ export default function SelectTime({
                   <span>{time}</span>
                   <FaCheck
                     size={12}
-                    className="hidden [[data-selected]_&]:block"
+                    className="hidden in-data-selected:block"
                   />
                 </ListboxOption>
               ))}
@@ -184,12 +184,12 @@ export default function SelectTime({
                 <ListboxOption
                   key={time}
                   value={time}
-                  className="flex items-center justify-between p-2 cursor-pointer rounded hover:bg-(--primary)/10 data-[selected]:bg-(--primary-dark) data-[selected]:text-white data-[selected]:font-semibold"
+                  className="flex items-center justify-between p-2 cursor-pointer rounded hover:bg-(--primary)/10 data-selected:bg-(--primary-dark) `data-selected:text-(--white) data-selected:font-semibold"
                 >
                   <span>{time}</span>
                   <FaCheck
                     size={12}
-                    className="hidden [[data-selected]_&]:block"
+                    className="hidden in-data-selected:block"
                   />
                 </ListboxOption>
               ))}
