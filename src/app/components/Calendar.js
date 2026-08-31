@@ -20,6 +20,8 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import {
   fetchBookingsForMonth,
   getFullyBookedDays,
+  fetchBlockedDatesForMonth,
+  getBlockedDaySet,
 } from "@/utils/availability";
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -27,11 +29,21 @@ const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 export default function Calendar({ selectedDate, onSelectDate }) {
   const [viewDate, setViewDate] = useState(new Date());
   const [fullyBookedDays, setFullyBookedDays] = useState(new Set());
+  const [blockedDays, setBlockedDays] = useState(new Set());
   const today = startOfDay(new Date());
 
   useEffect(() => {
     fetchBookingsForMonth(viewDate).then((bookings) => {
       setFullyBookedDays(getFullyBookedDays(bookings));
+    });
+  }, [viewDate]);
+
+  useEffect(() => {
+    fetchBookingsForMonth(viewDate).then((bookings) => {
+      setFullyBookedDays(getFullyBookedDays(bookings));
+    });
+    fetchBlockedDatesForMonth(viewDate).then((blocked) => {
+      setBlockedDays(getBlockedDaySet(blocked));
     });
   }, [viewDate]);
 
@@ -95,9 +107,10 @@ export default function Calendar({ selectedDate, onSelectDate }) {
           const outsideMonth = !isSameMonth(day, viewDate);
           const dayKey = format(day, "yyyy-MM-dd");
           const isFullyBooked = fullyBookedDays.has(dayKey);
+          const isBlocked = blockedDays.has(dayKey);
+          const disabled = past || isFullyBooked || isBlocked;
           const selected = selectedDate && isSameDay(day, selectedDate);
           const todayFlag = isToday(day);
-          const disabled = past || isFullyBooked;
 
           return (
             <button
@@ -105,7 +118,13 @@ export default function Calendar({ selectedDate, onSelectDate }) {
               type="button"
               disabled={disabled}
               onClick={() => handleSelect(day, isFullyBooked)}
-              title={isFullyBooked ? "Fully booked" : undefined}
+              title={
+                isBlocked
+                  ? "Unavailable"
+                  : isFullyBooked
+                    ? "Fully booked"
+                    : undefined
+              }
               className={`
                 aspect-square rounded-full text-sm transition-colors
                 ${disabled ? "cursor-not-allowed text-gray-300" : "cursor-pointer text-(--text) hover:bg-(--primary)/10"}

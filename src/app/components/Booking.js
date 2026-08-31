@@ -3,8 +3,9 @@
 import { useEffect, useReducer, useState } from "react";
 import confetti from "canvas-confetti";
 import { supabase } from "@/lib/supabaseClient";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-import { differenceInHours, format, parse } from "date-fns";
+import { differenceInMinutes, format, parse } from "date-fns";
 
 import { FaArrowRight } from "react-icons/fa";
 
@@ -20,6 +21,9 @@ import formatCurrency from "../../utils/formatCurrency";
 import PromoCodeInput from "./PromoCode";
 import SpinnerMini from "./SpinnerMini";
 import BookingConfirmation from "./BookingConfirmation";
+import AvailabilityTimeline from "./AvailabilityTimeline";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { isDateBlocked } from "@/utils/availability";
 
 // ✅ Initial state
 const initialState = {
@@ -77,10 +81,7 @@ function bookingReducer(state, action) {
         booking: action.booking,
         step: 4,
       };
-    case "NEXT_STEP":
-      return { ...state, step: state.step + 1 };
-    case "PREV_STEP":
-      return { ...state, step: state.step - 1 };
+
     case "SET_ERROR":
       return { ...state, errorMessage: action.message, step: state.step - 1 };
     case "RESET":
@@ -95,22 +96,40 @@ export default function Booking() {
   const [state, dispatch] = useReducer(bookingReducer, initialState);
   const [isConfirming, setIsConfirming] = useState(false);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const step = Number(searchParams.get("step")) || 1;
+
+  function goToStep(n) {
+    router.push(`${pathname}?step=${n}`);
+  }
+
   useEffect(() => {
     dispatch({ type: "RESET" });
   }, []);
 
   // Booking summary
+
   const ratePerHour = 5000;
-  const duration =
+
+  const minutes =
     state.startTime && state.endTime
-      ? differenceInHours(
+      ? differenceInMinutes(
           parse(state.endTime, "hh:mm a", state.selectedDate),
           parse(state.startTime, "hh:mm a", state.selectedDate),
         )
       : 0;
-  const subtotal = duration * ratePerHour;
-  const discount = state.discountApplied;
+
+  const duration = minutes / 60; // 30 mins = 0.5
+  const subtotal = duration * ratePerHour; // 0.5 * 5000 = 2500
+  const discount = state.discountApplied || 0;
   const total = subtotal - discount;
+
+  const hoursDisplay =
+    minutes >= 60
+      ? `${duration} hour${duration > 1 ? "s" : ""}` // "1.5 hours"
+      : `${minutes} mins`; // "30 mins"
 
   //  Availability effect
   useEffect(() => {
@@ -143,6 +162,17 @@ export default function Booking() {
         latestBookings,
       );
 
+      const dateIsBlocked = await isDateBlocked(state.selectedDate);
+      if (dateIsBlocked) {
+        dispatch({
+          type: "SET_ERROR",
+          message:
+            "Sorry, this date is no longer available. Please pick another date.",
+        });
+        router.replace(`${pathname}?step=1`);
+        return;
+      }
+
       if (!stillAvailable) {
         dispatch({
           type: "SET_ERROR",
@@ -150,7 +180,7 @@ export default function Booking() {
             "Sorry, this time slot was just booked by someone else. Please pick another time.",
         });
         dispatch({ type: "SET_BOOKINGS", bookings: latestBookings, slots: [] });
-        dispatch({ type: "PREV_STEP" });
+        router.replace(`${pathname}?step=1`);
         return;
       }
 
@@ -165,13 +195,13 @@ export default function Booking() {
             notes: state.notes,
             start_at: startDateTime.toISOString(),
             end_at: endDateTime.toISOString(),
-            duration_hours: duration,
+            duration_minutes: minutes,
             rate_per_hour: ratePerHour,
             subtotal,
             discount,
             total,
             promo_code: state.promoCode,
-            status: "confirmed",
+            status: "pending",
           },
         ])
         .select();
@@ -182,6 +212,7 @@ export default function Booking() {
       }
 
       dispatch({ type: "CONFIRM_BOOKING", id: data[0].id, booking: data[0] });
+      router.replace(`${pathname}?step=4`);
       confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -199,7 +230,7 @@ export default function Booking() {
               <div key={label} className="flex items-center">
                 <div
                   className={`flex flex-col items-center gap-0.5 ${
-                    state.step >= stepNum
+                    step >= stepNum
                       ? "text-(--primary) text-xs"
                       : "text-gray-400 text-xs"
                   }`}
@@ -207,7 +238,7 @@ export default function Booking() {
                   <span
                     className={`w-6 h-6 flex items-center justify-center rounded-full font-bold
                     ${
-                      state.step >= stepNum
+                      step >= stepNum
                         ? "bg-(--primary) text-white text-xs"
                         : "border border-gray-400 text-xs"
                     }`}
@@ -219,7 +250,7 @@ export default function Booking() {
                 {stepNum < 3 && (
                   <div
                     className={`h-0.5 w-12 ${
-                      state.step > stepNum ? "bg-(--primary)" : "bg-gray-300"
+                      step > stepNum ? "bg-(--primary)" : "bg-gray-300"
                     }`}
                   ></div>
                 )}
@@ -228,32 +259,40 @@ export default function Booking() {
           },
         )}
       </div>
-      <div className="flex flex-col justify-center items-start gap-4 md:grid md:grid-cols-2 md:gap-8 w-full">
+      <div className="flex flex-col justify-center gap-4 md:grid md:grid-cols-2 md:gap-8 w-full">
         {/* Step 1: Date & Time */}
-        {state.step === 1 && (
+        {step === 1 && (
           <>
             <Calendar
               selectedDate={state.selectedDate}
               onSelectDate={(date) => dispatch({ type: "SET_DATE", date })}
             />
             {state.selectedDate && (
-              <SelectTime
-                selectedDate={state.selectedDate}
-                startTime={state.startTime}
-                setStartTime={(val) =>
-                  dispatch({ type: "SET_START_TIME", start: val })
-                }
-                endTime={state.endTime}
-                setEndTime={(val) =>
-                  dispatch({ type: "SET_END_TIME", end: val })
-                }
-                bookings={state.bookingsForDate}
-              />
+              <div className="flex flex-col-reverse gap-4">
+                <SelectTime
+                  selectedDate={state.selectedDate}
+                  startTime={state.startTime}
+                  setStartTime={(val) =>
+                    dispatch({ type: "SET_START_TIME", start: val })
+                  }
+                  endTime={state.endTime}
+                  setEndTime={(val) =>
+                    dispatch({ type: "SET_END_TIME", end: val })
+                  }
+                  bookings={state.bookingsForDate}
+                />
+                <AvailabilityTimeline
+                  selectedDate={state.selectedDate}
+                  bookings={state.bookingsForDate}
+                  startTime={state.startTime}
+                  endTime={state.endTime}
+                />
+              </div>
             )}
             {state.selectedDate && state.startTime && state.endTime && (
               <button
-                onClick={() => dispatch({ type: "NEXT_STEP" })}
-                className="flex items-center self-end gap-2 bg-(--primary) text-(--white) text-xs py-3 px-8 w-max rounded-sm transition-all duration-300 ease-out hover:translate-x-1 md:col-span-2 place-self-center-safe"
+                onClick={() => goToStep(2)}
+                className="flex items-center gap-2 bg-(--primary) text-(--white) text-xs py-3 px-8 w-max rounded-sm transition-all duration-300 ease-out hover:translate-x-1 md:col-span-2 place-self-center cursor-pointer"
               >
                 Continue to Details
                 <FaArrowRight
@@ -267,13 +306,15 @@ export default function Booking() {
         )}
 
         {/* Step 2: Your Details */}
-        {state.step === 2 && (
+        {step === 2 && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              dispatch({ type: "NEXT_STEP" });
+              goToStep(3);
             }}
             className="space-y-4 w-[90%] md:row-span-2"
+            id="bookingForm"
+            autoComplete="true"
           >
             <input
               type="text"
@@ -287,6 +328,7 @@ export default function Booking() {
               }
               className="border border-gray-400 rounded p-2 w-full text-xs"
               required
+              name="fullName"
             />
             <input
               type="email"
@@ -300,6 +342,7 @@ export default function Booking() {
               }
               className="border border-gray-400 rounded p-2 w-full text-xs"
               required
+              name="email"
             />
             <input
               type="tel"
@@ -313,6 +356,7 @@ export default function Booking() {
               }
               className="border border-gray-400 rounded p-2 w-full text-xs"
               required
+              name="phone"
             />
             <input
               type="number"
@@ -327,6 +371,7 @@ export default function Booking() {
               }
               className="border border-gray-400 rounded p-2 w-full text-xs"
               required
+              name="players"
             />
             <textarea
               placeholder="Notes"
@@ -338,6 +383,7 @@ export default function Booking() {
                 })
               }
               className="border border-gray-400 rounded p-2 w-full text-xs "
+              name="notes"
             />
             <PromoCodeInput
               promoCode={state.promoCode}
@@ -345,19 +391,36 @@ export default function Booking() {
               subtotal={subtotal}
               dispatch={dispatch}
             />
-
-            <button
-              type="submit"
-              className="bg-(--primary) text-white px-8 py-3.5 rounded text-xs flex items-center gap-2 cursor-pointer transition-all duration-300 ease-out hover:translate-x-1"
-            >
-              Continue to Review
-              <FaArrowRight color="var(--white)" aria-hidden="true" size={14} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="text-(--primary) text-xs self-start py-3 px-8 bg-transparent border border-(primary-dark) flex items-center gap-2 rounded-sm cursor-pointer"
+              >
+                <ChevronLeft
+                  color="var(--primary-dark)"
+                  size={14}
+                  aria-hidden="true"
+                />{" "}
+                Back
+              </button>
+              <button
+                type="submit"
+                className="bg-(--primary) text-white px-8 py-3 rounded text-xs flex items-center gap-2 cursor-pointer transition-all duration-300 ease-out hover:translate-x-1"
+              >
+                Review Booking
+                <ChevronRight
+                  color="var(--white)"
+                  aria-hidden="true"
+                  size={14}
+                />
+              </button>
+            </div>
           </form>
         )}
       </div>
       {/* Step 3: Review Booking */}
-      {state.step === 3 && (
+      {step === 3 && (
         <div className="space-y-4 w-full shadow p-4 flex flex-col">
           {state.errorMessage && (
             <p className="text-(--error) text-sm font-semibold mb-2">
@@ -378,15 +441,14 @@ export default function Booking() {
           <p className="text-sm font-bold">
             Time:{" "}
             <span className="font-extrabold">
-              {state.startTime} – {state.endTime}
+              {state?.startTime && state?.endTime
+                ? `${state.startTime} – ${state.endTime}`
+                : "Not selected"}
             </span>
           </p>
 
           <p className="text-sm font-bold">
-            Duration:{" "}
-            <span className="font-extrabold">
-              {duration} {duration === 1 ? "hour" : "hours"}
-            </span>
+            Duration: <span className="font-extrabold">{hoursDisplay}</span>
           </p>
 
           <p className="font-bold text-sm">
@@ -412,115 +474,52 @@ export default function Booking() {
               ₦{formatCurrency(subtotal - state.discountApplied)}
             </span>
           </p>
-          <button
-            onClick={async () => {
-              setIsConfirming(true);
-              await confirmBooking();
-              setIsConfirming(false);
-            }}
-            disabled={isConfirming}
-            className="flex items-center self-center-safe gap-2 bg-(--primary) text-(--white) text-xs py-3 px-8 rounded-sm transition-all duration-300 ease-out hover:translate-x-1"
-          >
-            {isConfirming ? (
-              <SpinnerMini />
-            ) : (
-              <>
-                Confirm Booking
-                <FaArrowRight
-                  color="var(--white)"
-                  aria-hidden="true"
-                  size={14}
-                />
-              </>
-            )}
-          </button>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="text-(--primary) text-xs self-start py-3 px-8 bg-transparent border border-(primary-dark) flex items-center gap-2 rounded-sm cursor-pointer"
+            >
+              <ChevronLeft
+                color="var(--primary-dark)"
+                size={14}
+                aroa-hidden="true"
+              />
+              Back
+            </button>
+            <button
+              onClick={async () => {
+                setIsConfirming(true);
+                await confirmBooking();
+                setIsConfirming(false);
+              }}
+              disabled={isConfirming}
+              className={`flex items-center self-center-safe gap-2 bg-(--primary) text-(--white) text-xs py-3 px-8 rounded-sm transition-all duration-300 ease-out border border-transparent cursor-pointer
+    ${isConfirming ? "opacity-50 cursor-not-allowed" : "hover:translate-x-1"}`}
+            >
+              {isConfirming ? (
+                <SpinnerMini />
+              ) : (
+                <>
+                  Confirm Booking
+                  <ChevronRight
+                    color="var(--white)"
+                    aria-hidden="true"
+                    size={14}
+                  />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Step 4: Confirmation */}
-      {state.step === 4 && state.booking && (
+      {step === 4 && state.booking && (
         <BookingConfirmation
           booking={state.booking}
           bookingId={state.bookingId}
         />
-        // <div className="space-y-4 text-center relative shadow p-6 rounded flex flex-col items-center">
-        //   <FaCheckCircle color="var(--primary)" size={50} aria-hidden="true" />
-        //   <h2 className="text-xl font-bold text-(--primary)">
-        //     Booking Confirmed!
-        //   </h2>
-        //   <p>Your pitch has been successfully booked.</p>
-
-        //   <p className="text-sm font-bold flex flex-col">
-        //     Booking ID:{" "}
-        //     <span className="font-extrabold">{state.bookingId}</span>
-        //   </p>
-
-        //   <p className="text-sm font-bold">
-        //     Date:{" "}
-        //     <span className="font-extrabold">
-        //       {format(new Date(state.booking.start_at), "EEEE, MMMM d, yyyy")}
-        //     </span>
-        //   </p>
-
-        //   <p className="text-sm font-bold">
-        //     Time:{" "}
-        //     <span className="font-extrabold">
-        //       {format(new Date(state.booking.start_at), "h:mm a")} –{" "}
-        //       {format(new Date(state.booking.end_at), "h:mm a")}
-        //     </span>
-        //   </p>
-
-        //   <p className="text-sm font-bold">
-        //     Duration:{" "}
-        //     <span className="font-extrabold">
-        //       {(new Date(state.booking.end_at) -
-        //         new Date(state.booking.start_at)) /
-        //         (1000 * 60 * 60)}{" "}
-        //       {(new Date(state.booking.end_at) -
-        //         new Date(state.booking.start_at)) /
-        //         (1000 * 60 * 60) ===
-        //       1
-        //         ? "hour"
-        //         : "hours"}
-        //     </span>
-        //   </p>
-
-        //   <p className="text-sm font-bold">
-        //     Total Amount:{" "}
-        //     <span className="font-extrabold">₦{state.booking.total}</span>
-        //   </p>
-        //   <p className="text-sm font-bold">
-        //     Promo Code:{" "}
-        //     <span className="font-extrabold">
-        //       {state.booking.promo_code || "None"}
-        //     </span>
-        //   </p>
-
-        //   <p className="text-sm font-bold">
-        //     Discount Applied:{" "}
-        //     <span className="font-extrabold">₦{state.booking.discount}</span>
-        //   </p>
-
-        //   <div className="bg-(--warning) p-2 rounded w-full">
-        //     <p className="font-semibold">Payment on Arrival</p>
-        //     <p className="text-xs">
-        //       Please pay the total amount when you arrive at the turf.
-        //     </p>
-        //   </div>
-
-        //   <p className="text-sm">
-        //     We’ve sent a confirmation email to{" "}
-        //     <span className="font-extrabold">{state.booking.user_email}</span>
-        //   </p>
-
-        //   <Link
-        //     href="/"
-        //     className="bg-(--primary) text-(--white) px-8 py-3.5 flex items-center gap-2 rounded text-xs transition-all duration-300 ease-out hover:translate-x-1"
-        //   >
-        //     Back to Home
-        //     <FaHome color="var(--white)" size={20} aria-hidden="true" />
-        //   </Link>
-        // </div>
       )}
     </div>
   );

@@ -7,6 +7,19 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { FaCheckCircle, FaHome, FaRegCopy, FaCheck } from "react-icons/fa";
 
+import formatCurrency from "@/utils/formatCurrency";
+
+function getDurationDisplay(startAt, endAt) {
+  const ms = new Date(endAt) - new Date(startAt);
+  const minutes = Math.round(ms / (1000 * 60));
+  const hours = minutes / 60;
+
+  if (minutes >= 60) {
+    return `${hours % 1 === 0 ? hours : hours.toFixed(1)} hr${hours > 1 ? "s" : ""}`;
+  }
+  return `${minutes} min${minutes > 1 ? "s" : ""}`;
+}
+
 export default function BookingConfirmation({ booking, bookingId }) {
   const confirmationRef = useRef(null);
   const [copied, setCopied] = useState(false);
@@ -53,13 +66,13 @@ export default function BookingConfirmation({ booking, bookingId }) {
       >
         <FaCheckCircle color="var(--primary)" size={50} aria-hidden="true" />
         <h2 className="text-xl font-bold text-(--primary)">
-          Booking Confirmed!
+          Booking Received!
         </h2>
         <p>Your pitch has been successfully booked.</p>
 
         <p className="text-sm font-bold flex flex-col items-center gap-2">
           Booking ID:
-          <span className="flex gap-2">
+          <span className="flex flex-col items-center gap-3">
             <span className="font-extrabold">{bookingId}</span>
             <button
               type="button"
@@ -95,18 +108,15 @@ export default function BookingConfirmation({ booking, bookingId }) {
         <p className="text-sm font-bold">
           Duration:{" "}
           <span className="font-extrabold">
-            {(new Date(booking.end_at) - new Date(booking.start_at)) /
-              (1000 * 60 * 60)}{" "}
-            {(new Date(booking.end_at) - new Date(booking.start_at)) /
-              (1000 * 60 * 60) ===
-            1
-              ? "hour"
-              : "hours"}
+            {getDurationDisplay(booking.start_at, booking.end_at)}
           </span>
         </p>
 
         <p className="text-sm font-bold">
-          Total Amount: <span className="font-extrabold">₦{booking.total}</span>
+          Total Amount:{" "}
+          <span className="font-extrabold">
+            ₦{formatCurrency(booking.total)}
+          </span>
         </p>
         <p className="text-sm font-bold">
           Promo Code:{" "}
@@ -117,7 +127,7 @@ export default function BookingConfirmation({ booking, bookingId }) {
           <span className="font-extrabold">₦{booking.discount}</span>
         </p>
 
-        <div className="bg-(--warning) p-2 rounded w-full">
+        <div className="bg-amber-100 p-2 rounded w-full">
           <p className="font-semibold">Payment on Arrival</p>
           <p className="text-xs">
             Please pay the total amount when you arrive at the turf.

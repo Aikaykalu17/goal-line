@@ -15,7 +15,7 @@ function Hero() {
     >
       <div className="w-[90%] h-full mx-auto flex flex-col justify-center gap-4">
         <h1 className="text-(--white) text-2xl font-bold xl:text-5xl">
-          Play. Book. <br />
+          Book. Play. <br />
           Enjoy Football.
         </h1>
         <p className="text-(--gray) text-xs font-bold">All at GoalLine Turf</p>

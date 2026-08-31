@@ -1,5 +1,6 @@
 import Booking from "@/app/components/Booking";
 import SectionBanner from "@/app/components/SectionBanner";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Booking - GoalLine Turf",
@@ -19,7 +20,9 @@ function Page() {
       </SectionBanner>
 
       <div className="w-[90%] mx-auto py-8">
-        <Booking />
+        <Suspense>
+          <Booking />
+        </Suspense>
       </div>
     </section>
   );

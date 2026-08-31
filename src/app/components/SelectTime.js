@@ -35,7 +35,7 @@ function getDayBounds(selectedDate) {
   return { open, close };
 }
 
-function generateTimesOfDay(selectedDate, from, to) {
+function generateTimesOfDay(from, to) {
   const times = [];
   let current = from;
   while (current <= to) {
@@ -56,6 +56,37 @@ function isWithinBusyInterval(time, busyIntervals) {
   return busyIntervals.some((iv) => time >= iv.start && time < iv.end);
 }
 
+function formatDuration(totalMinutes) {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+
+  if (hours === 0) return `${mins} min${mins !== 1 ? "s" : ""}`;
+  if (mins === 0) return `${hours} hr${hours !== 1 ? "s" : ""}`;
+  return `${hours} hr${hours !== 1 ? "s" : ""} ${mins} min${mins !== 1 ? "s" : ""}`;
+}
+
+export async function fetchBlockedDatesForMonth(date) {
+  const start = startOfMonth(date).toISOString();
+  const end = endOfMonth(date).toISOString();
+  const { data } = await supabase
+    .from("blocked")
+    .select("*")
+    .lte("start_at", end)
+    .gte("end_at", start);
+  return data || [];
+}
+
+export const getBlockedDaySet = (blocked) => {
+  const set = new Set();
+  blocked.forEach((b) => {
+    eachDayOfInterval({
+      start: new Date(b.start_at),
+      end: new Date(b.end_at),
+    }).forEach((d) => set.add(format(d, "yyyy-MM-dd")));
+  });
+  return set;
+};
+
 export default function SelectTime({
   selectedDate,
   startTime,
@@ -69,7 +100,7 @@ export default function SelectTime({
   const { open, close } = getDayBounds(selectedDate);
   const busyIntervals = toBusyIntervals(bookings);
 
-  const startTimeSlots = generateTimesOfDay(selectedDate, open, close).filter(
+  const startTimeSlots = generateTimesOfDay(open, close).filter(
     (t) => !isWithinBusyInterval(t, busyIntervals) && t < close,
   );
   const startOptions = startTimeSlots.map((t) => format(t, "hh:mm a"));
@@ -99,7 +130,6 @@ export default function SelectTime({
       const boundary = nextBooking ? nextBooking.start : close;
 
       const endTimeSlots = generateTimesOfDay(
-        selectedDate,
         addMinutes(startDate, INTERVAL_MINUTES),
         boundary,
       );
@@ -107,17 +137,17 @@ export default function SelectTime({
     }
   }
 
-  let duration = null;
+  let durationMinutes = null;
   if (startTime && endTime) {
     const startDate = startTimeSlots.find(
       (t) => format(t, "hh:mm a") === startTime,
     );
-    const endDate = generateTimesOfDay(selectedDate, open, close).find(
+    const endDate = generateTimesOfDay(open, close).find(
       (t) => format(t, "hh:mm a") === endTime,
     );
     if (startDate && endDate) {
       const minutes = differenceInMinutes(endDate, startDate);
-      if (minutes > 0) duration = minutes / 60;
+      if (minutes > 0) durationMinutes = minutes;
     }
   }
 
@@ -134,7 +164,7 @@ export default function SelectTime({
 
       {/* Start Time */}
       <div className="mb-3">
-        <label className="block text-sm font-medium text-(--text)">
+        <label className="block font-medium text-(--text) text-xs">
           Start Time
         </label>
         <Listbox value={startTime} onChange={handleStartChange}>
@@ -145,13 +175,13 @@ export default function SelectTime({
             </ListboxButton>
             <ListboxOptions
               anchor="bottom"
-              className="z-100 mt-1 max-h-60 w-(--button-width) overflow-auto rounded bg-white border shadow"
+              className="z-100 mt-1 max-h-60 w-(--button-width) overflow-auto rounded bg-white border shadow text-xs"
             >
               {startOptions.map((time) => (
                 <ListboxOption
                   key={time}
                   value={time}
-                  className="flex items-center justify-between p-2 cursor-pointer rounded hover:bg-(--primary)/10 data-[selected]:bg-(--primary-dark) data-[selected]:text-white data-[selected]:font-semibold"
+                  className="flex items-center justify-between p-2 cursor-pointer rounded hover:bg-(--primary)/10 data-selected:bg-(--primary-dark) `data-selected:text-white"
                 >
                   <span>{time}</span>
                   <FaCheck
@@ -167,18 +197,18 @@ export default function SelectTime({
 
       {/* End Time */}
       <div className="mb-3">
-        <label className="block text-sm font-medium text-(--text)">
+        <label className="block text-xs font-medium text-(--text)">
           End Time
         </label>
         <Listbox value={endTime} onChange={setEndTime} disabled={!startTime}>
           <div className="relative mt-1">
             <ListboxButton className="flex items-center justify-between border rounded p-2 w-full text-(--text) disabled:opacity-50">
-              <span>{endTime || "Select end time"}</span>
+              <span className="text-xs">{endTime || "Select end time"}</span>
               <FaChevronDown size={12} className="text-gray-400" />
             </ListboxButton>
             <ListboxOptions
               anchor="bottom"
-              className="z-100 mt-1 max-h-60 w-(--button-width) overflow-auto rounded bg-white border shadow"
+              className="z-100 mt-1 max-h-60 w-(--button-width) overflow-auto rounded bg-white border shadow text-xs"
             >
               {endOptions.map((time) => (
                 <ListboxOption
@@ -198,9 +228,9 @@ export default function SelectTime({
         </Listbox>
       </div>
 
-      {duration && (
+      {durationMinutes && (
         <p className="text-sm font-semibold text-(--text)">
-          Duration: {duration} {duration === 1 ? "hour" : "hours"}
+          Duration: {formatDuration(durationMinutes)}
         </p>
       )}
     </div>

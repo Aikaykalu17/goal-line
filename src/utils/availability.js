@@ -118,3 +118,60 @@ export function generateAllSlots(selectedDate, startHour = 8, endHour = 23) {
 
   return slots;
 }
+
+import { eachDayOfInterval, format as formatDate } from "date-fns"; // add these if not already imported
+
+// Fetch all blocked date ranges overlapping the given month
+export async function fetchBlockedDatesForMonth(anyDateInMonth) {
+  const monthStart = startOfMonth(anyDateInMonth);
+  const monthEnd = endOfMonth(anyDateInMonth);
+
+  const { data, error } = await supabase
+    .from("blocked")
+    .select("start_at, end_at")
+    .lte("start_at", monthEnd.toISOString())
+    .gte("end_at", monthStart.toISOString());
+
+  if (error) {
+    console.error("Error fetching blocked dates:", error);
+    return [];
+  }
+  return data;
+}
+
+// Expand blocked ranges into a Set of "yyyy-MM-dd" strings, one per blocked day
+export function getBlockedDaySet(blockedRows) {
+  const blockedDays = new Set();
+
+  blockedRows.forEach((row) => {
+    const start = new Date(row.start_at);
+    const end = new Date(row.end_at);
+    const daysInRange = eachDayOfInterval({ start, end });
+    daysInRange.forEach((day) =>
+      blockedDays.add(formatDate(day, "yyyy-MM-dd")),
+    );
+  });
+
+  return blockedDays;
+}
+
+// Quick check for a single date — used as a final guard right before booking
+export async function isDateBlocked(date) {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(date);
+  dayEnd.setHours(23, 59, 59, 999);
+
+  const { data, error } = await supabase
+    .from("blocked")
+    .select("id")
+    .lte("start_at", dayEnd.toISOString())
+    .gte("end_at", dayStart.toISOString())
+    .limit(1);
+
+  if (error) {
+    console.error("Error checking blocked date:", error);
+    return false; // fail-open here would be wrong for safety, but fail-closed would block bookings on a network error — flag this trade-off to Aikay
+  }
+  return data && data.length > 0;
+}

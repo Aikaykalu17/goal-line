@@ -54,7 +54,7 @@ export default function PromoCodeInput({
 
       {discountApplied > 0 && (
         <p className="text-green-600 text-xs font-semibold">
-          Promo applied! You saved ₦{discountApplied}
+          Promo code applied! You got a discount of ₦{discountApplied}
         </p>
       )}
     </div>
