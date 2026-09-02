@@ -1,5 +1,6 @@
-const formatWithCommas = (amount) => {
-  const num = Number(amount) || 0;
-  return num.toLocaleString("en-NG");
-};
-export default formatWithCommas;
+export default function formatCurrency(value) {
+  return new Intl.NumberFormat("en-NG", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+}

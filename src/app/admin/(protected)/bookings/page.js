@@ -1,5 +1,8 @@
 "use client";
-import { updateBookingStatusAction } from "./actions";
+import {
+  syncExpiredBookingsAction,
+  updateBookingStatusAction,
+} from "./actions";
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
@@ -7,24 +10,50 @@ import { supabase } from "@/lib/supabaseClient";
 import formatCurrency from "@/utils/formatCurrency";
 import Spinner from "@/app/components/Spinner";
 
-const TABS = ["All", "Pending", "Confirmed", "Cancelled"];
+const TABS = ["All", "Pending", "Confirmed", "Cancelled", "Expired"];
 const PAGE_SIZE = 10;
 
 const STATUS_STYLES = {
   confirmed: "bg-green-100 text-green-700",
   pending: "bg-amber-100 text-amber-700",
   cancelled: "bg-red-100 text-red-700",
+  expired: "bg-red-100 text-red-700",
 };
 
+function getBookingStatus(booking) {
+  const status = String(booking?.status || "")
+    .trim()
+    .toLowerCase();
+
+  if (status === "pending") {
+    const createdAt = booking?.created_at ? new Date(booking.created_at) : null;
+    if (createdAt && !Number.isNaN(createdAt.getTime())) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (createdAt < today) {
+        return "expired";
+      }
+    }
+  }
+
+  return status || "pending";
+}
+
 const formatStatusLabel = (status) => {
-  const normalized = String(status || "").trim();
+  const normalized = String(status || "")
+    .trim()
+    .toLowerCase();
   if (!normalized) return "Pending";
 
-  return normalized
-    .toLowerCase()
+  if (normalized === "expired") return "Expired Booking";
+
+  const formatted = normalized
     .split(" ")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+
+  return formatted;
 };
 
 export default function BookingsPage() {
@@ -44,18 +73,27 @@ export default function BookingsPage() {
     async function loadBookings() {
       setIsLoading(true);
 
+      try {
+        const syncResult = await syncExpiredBookingsAction();
+        if (syncResult?.updated > 0) {
+          setReloadTrigger((n) => n + 1);
+        }
+      } catch (err) {
+        console.error("Could not sync expired bookings:", err);
+      }
+
       let query = supabase
         .from("bookings")
         .select("*", { count: "exact" })
-        .order("start_at", { ascending: false });
+        .order("start_at", { ascending: true });
 
-      if (activeTab !== "All") {
+      if (activeTab !== "All" && activeTab !== "Expired") {
         query = query.eq("status", activeTab.toLowerCase());
       }
 
-      const from = (page - 1) * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      query = query.range(from, to);
+      if (activeTab === "Expired") {
+        query = query.eq("status", "expired");
+      }
 
       const { data, count, error } = await query;
 
@@ -64,8 +102,34 @@ export default function BookingsPage() {
       if (error) {
         console.error("Error fetching bookings:", error);
       } else {
-        setBookings(data || []);
-        setTotalCount(count || 0);
+        const sortedBookings = [...(data || [])]
+          .map((booking) => ({
+            ...booking,
+            effectiveStatus: getBookingStatus(booking),
+          }))
+          .sort((a, b) => {
+            const timeA = new Date(a.start_at || 0).getTime();
+            const timeB = new Date(b.start_at || 0).getTime();
+            return timeA - timeB;
+          });
+
+        const visibleBookings =
+          activeTab === "All"
+            ? sortedBookings
+            : activeTab === "Expired"
+              ? sortedBookings.filter(
+                  (booking) => booking.effectiveStatus === "expired",
+                )
+              : sortedBookings.filter(
+                  (booking) =>
+                    booking.effectiveStatus === activeTab.toLowerCase(),
+                );
+
+        const from = (page - 1) * PAGE_SIZE;
+        const paginatedBookings = visibleBookings.slice(from, from + PAGE_SIZE);
+
+        setBookings(paginatedBookings);
+        setTotalCount(visibleBookings.length || count || 0);
       }
 
       setIsLoading(false);
@@ -113,7 +177,7 @@ export default function BookingsPage() {
     setActioningId(null);
   }
   if (isLoading && bookings.length === 0) {
-    return <Spinner label="Loading bookings" />;
+    return <Spinner label="Loading bookings" fullScreen />;
   }
 
   return (
@@ -184,15 +248,15 @@ export default function BookingsPage() {
                     <td className="p-3 text-xs">
                       <span
                         className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
-                          STATUS_STYLES[booking.status] ||
+                          STATUS_STYLES[getBookingStatus(booking)] ||
                           "bg-gray-100 text-gray-700"
                         }`}
                       >
-                        {formatStatusLabel(booking.status)}
+                        {formatStatusLabel(getBookingStatus(booking))}
                       </span>
                     </td>
                     <td className="p-3">
-                      {booking.status === "pending" ? (
+                      {getBookingStatus(booking) === "pending" ? (
                         <div className="flex gap-2">
                           <button
                             type="button"
@@ -245,10 +309,11 @@ export default function BookingsPage() {
                 </div>
                 <span
                   className={`inline-block rounded px-2 py-0.5 text-[10px] font-semibold ${
-                    STATUS_STYLES[booking.status] || "bg-gray-100 text-gray-700"
+                    STATUS_STYLES[getBookingStatus(booking)] ||
+                    "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {booking.status}
+                  {formatStatusLabel(getBookingStatus(booking))}
                 </span>
               </div>
 
@@ -286,7 +351,7 @@ export default function BookingsPage() {
                 </div>
               </div>
 
-              {booking.status === "pending" && (
+              {getBookingStatus(booking) === "pending" && (
                 <div className="mt-1 flex gap-2">
                   <button
                     onClick={() => handleStatusChange(booking.id, "confirmed")}

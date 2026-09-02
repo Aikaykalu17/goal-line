@@ -11,12 +11,18 @@ import formatCurrency from "@/utils/formatCurrency";
 
 function getDurationDisplay(startAt, endAt) {
   const ms = new Date(endAt) - new Date(startAt);
-  const minutes = Math.round(ms / (1000 * 60));
-  const hours = minutes / 60;
+  const totalMinutes = Math.round(ms / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
 
-  if (minutes >= 60) {
-    return `${hours % 1 === 0 ? hours : hours.toFixed(1)} hr${hours > 1 ? "s" : ""}`;
+  if (hours && minutes) {
+    return `${hours} hr${hours > 1 ? "s" : ""} ${minutes} min${minutes > 1 ? "s" : ""}`;
   }
+
+  if (hours) {
+    return `${hours} hr${hours > 1 ? "s" : ""}`;
+  }
+
   return `${minutes} min${minutes > 1 ? "s" : ""}`;
 }
 
@@ -30,11 +36,20 @@ export default function BookingConfirmation({ booking, bookingId }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const ticketWidthPx = 385;
+  const ticketHeightPx = 200 * 3.7795275591;
+  const innerTicketWidth = 380;
+
   async function downloadAsImage() {
     if (!confirmationRef.current) return;
     const canvas = await html2canvas(confirmationRef.current, {
       backgroundColor: "#ffffff",
       scale: 2,
+      useCORS: true,
+      width: ticketWidthPx,
+      height: ticketHeightPx,
+      windowWidth: ticketWidthPx,
+      windowHeight: ticketHeightPx,
     });
     const link = document.createElement("a");
     link.download = `booking-${bookingId}.png`;
@@ -47,94 +62,211 @@ export default function BookingConfirmation({ booking, bookingId }) {
     const canvas = await html2canvas(confirmationRef.current, {
       backgroundColor: "#ffffff",
       scale: 2,
+      useCORS: true,
+      width: ticketWidthPx,
+      height: ticketHeightPx,
+      windowWidth: ticketWidthPx,
+      windowHeight: ticketHeightPx,
     });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "px",
-      format: [canvas.width, canvas.height],
+      format: [canvas.width + 16, canvas.height + 16],
     });
-    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+    pdf.addImage(imgData, "PNG", 8, 8, canvas.width, canvas.height);
     pdf.save(`booking-${bookingId}.pdf`);
   }
 
   return (
-    <div className="space-y-4 text-center relative shadow p-6 rounded flex flex-col items-center">
+    <div
+      className="space-y-4 text-center relative shadow rounded flex flex-col items-center"
+      style={{
+        backgroundColor: "#ffffff",
+        width: "100%",
+        maxWidth: `${ticketWidthPx}px`,
+        minHeight: `${ticketHeightPx}px`,
+        padding: "0.875rem 0.875rem 0.75rem",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
       <div
         ref={confirmationRef}
-        className="space-y-4 flex flex-col items-center"
+        className="flex flex-col items-center"
+        style={{
+          backgroundColor: "#ffffff",
+          width: "100%",
+          maxWidth: `${innerTicketWidth}px`,
+          minHeight: `${ticketHeightPx - 40}px`,
+          padding: "0.375rem 0.375rem 0",
+          boxSizing: "border-box",
+          overflow: "visible",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
       >
-        <FaCheckCircle color="var(--primary)" size={50} aria-hidden="true" />
-        <h2 className="text-xl font-bold text-(--primary)">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "6px",
+            marginBottom: "8px",
+          }}
+        >
+          <FaCheckCircle color="#008a4c" size={54} aria-hidden="true" />
+        </div>
+
+        <h2
+          className="text-xl font-bold"
+          style={{
+            color: "#008a4c",
+            margin: "0 0 8px",
+            letterSpacing: "-0.03em",
+          }}
+        >
           Booking Received!
         </h2>
-        <p>Your pitch has been successfully booked.</p>
 
-        <p className="text-sm font-bold flex flex-col items-center gap-2">
-          Booking ID:
-          <span className="flex flex-col items-center gap-3">
-            <span className="font-extrabold">{bookingId}</span>
-            <button
-              type="button"
-              onClick={handleCopyId}
-              aria-label="Copy booking ID"
-              className="text-(--primary)"
+        <p
+          style={{ color: "#17201c", margin: "0 0 18px", fontSize: "1.05rem" }}
+        >
+          Your pitch has been successfully booked.
+        </p>
+
+        <div
+          style={{
+            width: "100%",
+            borderTop: "1px solid #e5e7eb",
+            borderBottom: "1px solid #e5e7eb",
+            padding: "12px 0",
+            marginBottom: "14px",
+          }}
+        >
+          <p
+            className="text-sm font-bold flex flex-col items-center gap-2"
+            style={{ color: "#17201c", width: "100%", margin: 0 }}
+          >
+            Booking ID:
+            <span
+              className="flex flex-col items-center gap-3"
+              style={{ width: "100%" }}
             >
-              {copied ? (
-                <FaCheck size={14} />
-              ) : (
-                <FaRegCopy size={14} aria-hidden="true" />
-              )}
-            </button>
-          </span>
-          {copied && <span className="text-xs text-(--primary)">Copied!</span>}
-        </p>
+              <span
+                className="font-extrabold"
+                style={{
+                  color: "#17201c",
+                  width: "100%",
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
+                  lineHeight: 1.5,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {bookingId}
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyId}
+                aria-label="Copy booking ID"
+                className="text-(--primary)"
+                style={{ color: "#008a4c" }}
+              >
+                {copied ? (
+                  <FaCheck size={14} />
+                ) : (
+                  <FaRegCopy size={14} aria-hidden="true" />
+                )}
+              </button>
+            </span>
+            {copied && (
+              <span className="text-xs" style={{ color: "#008a4c" }}>
+                Copied!
+              </span>
+            )}
+          </p>
+        </div>
 
-        <p className="text-sm font-bold">
-          Date:{" "}
-          <span className="font-extrabold">
-            {format(new Date(booking.start_at), "EEEE, MMMM d, yyyy")}
-          </span>
-        </p>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Date:{" "}
+            <span className="font-extrabold">
+              {format(new Date(booking.start_at), "EEEE, MMMM d, yyyy")}
+            </span>
+          </p>
 
-        <p className="text-sm font-bold">
-          Time:{" "}
-          <span className="font-extrabold">
-            {format(new Date(booking.start_at), "h:mm a")} –{" "}
-            {format(new Date(booking.end_at), "h:mm a")}
-          </span>
-        </p>
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Time:{" "}
+            <span className="font-extrabold">
+              {format(new Date(booking.start_at), "h:mm a")} –{" "}
+              {format(new Date(booking.end_at), "h:mm a")}
+            </span>
+          </p>
 
-        <p className="text-sm font-bold">
-          Duration:{" "}
-          <span className="font-extrabold">
-            {getDurationDisplay(booking.start_at, booking.end_at)}
-          </span>
-        </p>
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Duration:{" "}
+            <span className="font-extrabold">
+              {getDurationDisplay(booking.start_at, booking.end_at)}
+            </span>
+          </p>
 
-        <p className="text-sm font-bold">
-          Total Amount:{" "}
-          <span className="font-extrabold">
-            ₦{formatCurrency(booking.total)}
-          </span>
-        </p>
-        <p className="text-sm font-bold">
-          Promo Code:{" "}
-          <span className="font-extrabold">{booking.promo_code || "None"}</span>
-        </p>
-        <p className="text-sm font-bold">
-          Discount Applied:{" "}
-          <span className="font-extrabold">₦{booking.discount}</span>
-        </p>
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Customer:{" "}
+            <span className="font-extrabold">{booking.user_full_name}</span>
+          </p>
 
-        <div className="bg-amber-100 p-2 rounded w-full">
-          <p className="font-semibold">Payment on Arrival</p>
-          <p className="text-xs">
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Total Amount:{" "}
+            <span className="font-extrabold">
+              ₦{formatCurrency(booking.total)}
+            </span>
+          </p>
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Promo Code:{" "}
+            <span className="font-extrabold">
+              {booking.promo_code || "None"}
+            </span>
+          </p>
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Discount Applied:{" "}
+            <span className="font-extrabold">₦{booking.discount}</span>
+          </p>
+        </div>
+
+        <div
+          className="p-2 rounded w-full"
+          style={{
+            backgroundColor: "#fef3c7",
+            color: "#78350f",
+            marginTop: "14px",
+            border: "1px solid #f4d58a",
+          }}
+        >
+          <p
+            className="font-semibold"
+            style={{ color: "#78350f", margin: "0 0 4px" }}
+          >
+            Payment on Arrival
+          </p>
+          <p className="text-xs" style={{ color: "#78350f", margin: 0 }}>
             Please pay the total amount when you arrive at the turf.
           </p>
         </div>
 
-        <p className="text-sm">
+        <p
+          className="text-sm"
+          style={{ marginTop: "14px", textAlign: "center", lineHeight: 1.5 }}
+        >
           We&apos;ve sent a confirmation email to{" "}
           <span className="font-extrabold">{booking.user_email}</span>
         </p>

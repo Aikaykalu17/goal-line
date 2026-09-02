@@ -1,30 +1,41 @@
 "use client";
 
-import { getActivePromo } from "../services/promoService";
+import { validatePromoCodeAction } from "@/app/(site)/booking/actions";
 
 export default function PromoCodeInput({
   promoCode,
   discountApplied,
   dispatch,
+  subtotal,
 }) {
   async function applyPromoCode() {
-    if (!promoCode) return;
+    if (!promoCode?.trim()) return;
 
-    const promo = await getActivePromo(promoCode);
+    try {
+      const result = await validatePromoCodeAction(promoCode, subtotal);
 
-    if (promo) {
+      if (result.valid) {
+        dispatch({
+          type: "SET_PROMO",
+          code: promoCode.trim().toUpperCase(),
+          discount: result.discount,
+        });
+        return;
+      }
+
       dispatch({
         type: "SET_PROMO",
-        code: promoCode,
-        discount: promo.discount_percent,
-      });
-    } else {
-      dispatch({
-        type: "SET_PROMO",
-        code: promoCode,
+        code: promoCode.trim().toUpperCase(),
         discount: 0,
       });
-      alert("Invalid or expired promo code");
+      alert(result.reason || "Invalid or expired promo code");
+    } catch (error) {
+      dispatch({
+        type: "SET_PROMO",
+        code: promoCode.trim().toUpperCase(),
+        discount: 0,
+      });
+      alert(error?.message || "Could not validate promo code.");
     }
   }
 

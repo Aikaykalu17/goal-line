@@ -65,28 +65,6 @@ function formatDuration(totalMinutes) {
   return `${hours} hr${hours !== 1 ? "s" : ""} ${mins} min${mins !== 1 ? "s" : ""}`;
 }
 
-export async function fetchBlockedDatesForMonth(date) {
-  const start = startOfMonth(date).toISOString();
-  const end = endOfMonth(date).toISOString();
-  const { data } = await supabase
-    .from("blocked")
-    .select("*")
-    .lte("start_at", end)
-    .gte("end_at", start);
-  return data || [];
-}
-
-export const getBlockedDaySet = (blocked) => {
-  const set = new Set();
-  blocked.forEach((b) => {
-    eachDayOfInterval({
-      start: new Date(b.start_at),
-      end: new Date(b.end_at),
-    }).forEach((d) => set.add(format(d, "yyyy-MM-dd")));
-  });
-  return set;
-};
-
 export default function SelectTime({
   selectedDate,
   startTime,

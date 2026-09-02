@@ -11,7 +11,41 @@ const STATUS_STYLES = {
   confirmed: "bg-green-100 text-green-700",
   pending: "bg-amber-100 text-amber-700",
   cancelled: "bg-red-100 text-red-700",
+  expired: "bg-red-100 text-red-700",
 };
+
+function formatStatusText(status) {
+  const normalized = String(status || "").trim();
+  if (!normalized) return "Pending";
+
+  const title = normalized
+    .toLowerCase()
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+  return title === "Expired" ? "Expired Booking" : title;
+}
+
+function getBookingStatus(booking) {
+  const status = String(booking?.status || "")
+    .trim()
+    .toLowerCase();
+
+  if (status === "pending") {
+    const createdAt = booking?.created_at ? new Date(booking.created_at) : null;
+    if (createdAt && !Number.isNaN(createdAt.getTime())) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (createdAt < today) {
+        return "expired";
+      }
+    }
+  }
+
+  return status || "pending";
+}
 
 export default function VerifyIdPage() {
   const [query, setQuery] = useState("");
@@ -48,6 +82,15 @@ export default function VerifyIdPage() {
   }
 
   const isBookingResult = result && result !== "not-found";
+  const bookingStatus = isBookingResult ? getBookingStatus(result) : null;
+  const resultCardClasses =
+    bookingStatus === "confirmed"
+      ? "bg-green-100"
+      : bookingStatus === "expired"
+        ? "bg-red-100"
+        : bookingStatus === "cancelled"
+          ? "bg-red-100"
+          : "bg-amber-50";
 
   return (
     <div>
@@ -80,7 +123,7 @@ export default function VerifyIdPage() {
           ) : (
             <>
               <FaSearch size={12} />
-              <span>Verify ID</span>
+              <span className="text-xs">Verify ID</span>
             </>
           )}
         </button>
@@ -96,7 +139,7 @@ export default function VerifyIdPage() {
           )}
 
           {isBookingResult && (
-            <div className="rounded-lg bg-green-50 p-4 space-y-2 ">
+            <div className={`rounded-lg p-4 space-y-2 ${resultCardClasses}`}>
               <p className="flex flex-col items-center gap-2 font-semibold text-green-700 md:flex md:flex-row md:items-center">
                 <span className="flex items-center gap-2">
                   <FaCheckCircle />
@@ -107,11 +150,11 @@ export default function VerifyIdPage() {
               <p className="text-sm font-bold">
                 Status:{" "}
                 <span
-                  className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                    STATUS_STYLES[result.status] || "bg-gray-100 text-gray-700"
+                  className={`inline-block px-2 py-0.5 rounded text-xs font-bold border  ${
+                    STATUS_STYLES[bookingStatus] || "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {result.status}
+                  {formatStatusText(bookingStatus)}
                 </span>
               </p>
               <p className="text-sm font-bold">

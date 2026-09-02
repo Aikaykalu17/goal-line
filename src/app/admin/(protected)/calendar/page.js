@@ -18,7 +18,7 @@ import { FaChevronLeft, FaChevronRight, FaPlus, FaTimes } from "react-icons/fa";
 import { supabase } from "@/lib/supabaseClient";
 import formatCurrency from "@/utils/formatCurrency";
 import Spinner from "@/app/components/Spinner";
-import { createBlockedDateAction } from "./actions";
+import { createBlockedDateAction, getBlockedDatesAction } from "./actions";
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -43,15 +43,10 @@ function BlockDateModal({ onClose, onSaved }) {
     setError("");
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       await createBlockedDateAction({
         start_at: new Date(`${startDate}T00:00:00`).toISOString(),
         end_at: new Date(`${endDate}T23:59:59`).toISOString(),
         reason,
-        created_by: user?.id || null,
       });
 
       onSaved();
@@ -150,19 +145,18 @@ export default function CalendarPage() {
           .from("bookings")
           .select("id, start_at, end_at, status, user_full_name, total")
           .gte("start_at", monthStart.toISOString())
-          .lte("start_at", monthEnd.toISOString())
+          .lte("end_at", monthEnd.toISOString())
           .neq("status", "cancelled"),
-        supabase
-          .from("blocked")
-          .select("*")
-          .lte("start_at", monthEnd.toISOString())
-          .gte("end_at", monthStart.toISOString()),
+        getBlockedDatesAction({
+          start: monthStart,
+          end: monthEnd,
+        }),
       ]);
 
       if (ignore) return;
 
       setMonthBookings(bookingsRes.data || []);
-      setBlockedDates(blockedRes.data || []);
+      setBlockedDates(blockedRes || []);
       setIsLoading(false);
     }
 

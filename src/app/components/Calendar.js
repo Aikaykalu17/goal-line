@@ -20,9 +20,9 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import {
   fetchBookingsForMonth,
   getFullyBookedDays,
-  fetchBlockedDatesForMonth,
   getBlockedDaySet,
 } from "@/utils/availability";
+import { getBlockedDatesAction } from "@/app/actions/availability";
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -33,18 +33,36 @@ export default function Calendar({ selectedDate, onSelectDate }) {
   const today = startOfDay(new Date());
 
   useEffect(() => {
-    fetchBookingsForMonth(viewDate).then((bookings) => {
-      setFullyBookedDays(getFullyBookedDays(bookings));
-    });
-  }, [viewDate]);
+    let ignore = false;
 
-  useEffect(() => {
-    fetchBookingsForMonth(viewDate).then((bookings) => {
-      setFullyBookedDays(getFullyBookedDays(bookings));
-    });
-    fetchBlockedDatesForMonth(viewDate).then((blocked) => {
-      setBlockedDays(getBlockedDaySet(blocked));
-    });
+    async function loadAvailability() {
+      const rangeStart = startOfMonth(viewDate);
+      const rangeEnd = endOfMonth(viewDate);
+
+      try {
+        const [bookings, blocked] = await Promise.all([
+          fetchBookingsForMonth(viewDate),
+          getBlockedDatesAction({ start: rangeStart, end: rangeEnd }),
+        ]);
+
+        if (ignore) return;
+
+        setFullyBookedDays(getFullyBookedDays(bookings));
+        setBlockedDays(getBlockedDaySet(blocked));
+      } catch (error) {
+        console.error("Could not load calendar availability:", error);
+        if (!ignore) {
+          setFullyBookedDays(new Set());
+          setBlockedDays(new Set());
+        }
+      }
+    }
+
+    loadAvailability();
+
+    return () => {
+      ignore = true;
+    };
   }, [viewDate]);
 
   const gridStart = startOfWeek(startOfMonth(viewDate), { weekStartsOn: 1 });

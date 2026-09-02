@@ -2,7 +2,6 @@
 
 import { useEffect, useReducer, useState } from "react";
 import confetti from "canvas-confetti";
-import { supabase } from "@/lib/supabaseClient";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 import { differenceInMinutes, format, parse } from "date-fns";
@@ -23,7 +22,8 @@ import SpinnerMini from "./SpinnerMini";
 import BookingConfirmation from "./BookingConfirmation";
 import AvailabilityTimeline from "./AvailabilityTimeline";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { isDateBlocked } from "@/utils/availability";
+import { createBookingAction } from "@/app/(site)/booking/actions";
+import { getRateForDate } from "@/lib/pricing";
 
 // ✅ Initial state
 const initialState = {
@@ -62,6 +62,8 @@ function bookingReducer(state, action) {
       };
     case "SET_USER":
       return { ...state, ...action.payload };
+    case "SET_STEP":
+      return { ...state, step: action.step };
     case "SET_PROMO":
       return {
         ...state,
@@ -105,13 +107,16 @@ export default function Booking() {
     router.push(`${pathname}?step=${n}`);
   }
 
-  useEffect(() => {
-    dispatch({ type: "RESET" });
-  }, []);
-
   // Booking summary
 
-  const ratePerHour = 5000;
+  const selectedStartDateTime =
+    state.selectedDate && state.startTime
+      ? parse(state.startTime, "hh:mm a", state.selectedDate)
+      : null;
+
+  const ratePerHour = selectedStartDateTime
+    ? getRateForDate(selectedStartDateTime)
+    : 5000;
 
   const minutes =
     state.startTime && state.endTime
@@ -133,10 +138,10 @@ export default function Booking() {
 
   //  Availability effect
   useEffect(() => {
-    if (!state.selectedDate) return; // guard
+    if (!state.selectedDate) return;
 
-    if (state.selectedDate) {
-      fetchBookingsForDate(state.selectedDate).then((bookings) => {
+    fetchBookingsForDate(state.selectedDate)
+      .then((bookings) => {
         const allSlots = generateAllSlots(state.selectedDate);
         const freeSlots = allSlots.filter((slot) => {
           const slotStart = parse(slot.start, "hh:mm a", state.selectedDate);
@@ -145,77 +150,48 @@ export default function Booking() {
         });
 
         dispatch({ type: "SET_BOOKINGS", bookings, slots: freeSlots });
+      })
+      .catch((error) => {
+        console.error("Could not load booking availability:", error);
       });
-    }
   }, [state.selectedDate]);
 
-  // Supabase insert function
   async function confirmBooking() {
+    if (!state.selectedDate || !state.startTime || !state.endTime) return;
+
     const startDateTime = parse(state.startTime, "hh:mm a", state.selectedDate);
     const endDateTime = parse(state.endTime, "hh:mm a", state.selectedDate);
 
     try {
-      const latestBookings = await fetchBookingsForDate(state.selectedDate);
-      const stillAvailable = isSlotAvailable(
-        startDateTime,
-        endDateTime,
-        latestBookings,
-      );
+      const result = await createBookingAction({
+        user_full_name: state.fullName,
+        user_email: state.email,
+        user_phone: state.phone,
+        players: state.players,
+        notes: state.notes,
+        start_at: startDateTime.toISOString(),
+        end_at: endDateTime.toISOString(),
+        duration_minutes: minutes,
+        rate_per_hour: ratePerHour,
+        subtotal,
+        discount,
+        total,
+        promo_code: state.promoCode,
+      });
 
-      const dateIsBlocked = await isDateBlocked(state.selectedDate);
-      if (dateIsBlocked) {
-        dispatch({
-          type: "SET_ERROR",
-          message:
-            "Sorry, this date is no longer available. Please pick another date.",
-        });
-        router.replace(`${pathname}?step=1`);
-        return;
-      }
-
-      if (!stillAvailable) {
-        dispatch({
-          type: "SET_ERROR",
-          message:
-            "Sorry, this time slot was just booked by someone else. Please pick another time.",
-        });
-        dispatch({ type: "SET_BOOKINGS", bookings: latestBookings, slots: [] });
-        router.replace(`${pathname}?step=1`);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert([
-          {
-            user_full_name: state.fullName,
-            user_email: state.email,
-            user_phone: state.phone,
-            players: state.players,
-            notes: state.notes,
-            start_at: startDateTime.toISOString(),
-            end_at: endDateTime.toISOString(),
-            duration_minutes: minutes,
-            rate_per_hour: ratePerHour,
-            subtotal,
-            discount,
-            total,
-            promo_code: state.promoCode,
-            status: "pending",
-          },
-        ])
-        .select();
-
-      if (error) {
-        alert("Could not save booking: " + error.message);
-        return;
-      }
-
-      dispatch({ type: "CONFIRM_BOOKING", id: data[0].id, booking: data[0] });
+      dispatch({
+        type: "CONFIRM_BOOKING",
+        id: result.booking.id,
+        booking: result.booking,
+      });
       router.replace(`${pathname}?step=4`);
       confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error("Could not create booking:", err);
+
+      const message = err?.message || "Could not save your booking.";
+      dispatch({ type: "SET_ERROR", message });
+      router.replace(`${pathname}?step=1`);
     }
   }
 
@@ -263,6 +239,11 @@ export default function Booking() {
         {/* Step 1: Date & Time */}
         {step === 1 && (
           <>
+            {state.errorMessage && (
+              <p className="text-center text-sm font-semibold text-(--error) md:col-span-2">
+                {state.errorMessage}
+              </p>
+            )}
             <Calendar
               selectedDate={state.selectedDate}
               onSelectDate={(date) => dispatch({ type: "SET_DATE", date })}
@@ -432,6 +413,10 @@ export default function Booking() {
           </h3>
 
           <p className="text-sm font-bold">
+            Customer: <span className="font-extrabold">{state.fullName}</span>
+          </p>
+
+          <p className="text-sm font-bold">
             Date:{" "}
             <span className="font-extrabold">
               {format(state.selectedDate, "EEEE, MMMM d, yyyy")}
@@ -483,22 +468,27 @@ export default function Booking() {
               <ChevronLeft
                 color="var(--primary-dark)"
                 size={14}
-                aroa-hidden="true"
+                aria-hidden="true"
               />
               Back
             </button>
             <button
+              type="button"
               onClick={async () => {
                 setIsConfirming(true);
                 await confirmBooking();
                 setIsConfirming(false);
               }}
               disabled={isConfirming}
-              className={`flex items-center self-center-safe gap-2 bg-(--primary) text-(--white) text-xs py-3 px-8 rounded-sm transition-all duration-300 ease-out border border-transparent cursor-pointer
+              aria-busy={isConfirming}
+              className={`inline-flex min-h-[46px] min-w-[210px] items-center justify-center gap-2 self-center-safe rounded-sm border border-transparent bg-(--primary) px-8 py-3 text-xs text-(--white) transition-all duration-300 ease-out cursor-pointer
     ${isConfirming ? "opacity-50 cursor-not-allowed" : "hover:translate-x-1"}`}
             >
               {isConfirming ? (
-                <SpinnerMini />
+                <span className="inline-flex items-center justify-center gap-2">
+                  <SpinnerMini />
+                  <span className="sr-only">Confirming booking</span>
+                </span>
               ) : (
                 <>
                   Confirm Booking

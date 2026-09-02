@@ -37,15 +37,43 @@ function TrendBadge({ current, previous }) {
   );
 }
 
+function compactNumber(value) {
+  if (!Number.isFinite(Number(value))) return value;
+
+  const n = Number(value);
+  const abs = Math.abs(n);
+
+  if (abs >= 1_000_000) {
+    return `${(n / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2).replace(/\.0$/, "")}M`;
+  }
+
+  if (abs >= 1_000) {
+    return `${(n / 1_000).toFixed(abs >= 10_000 ? 1 : 2).replace(/\.0$/, "")}K`;
+  }
+
+  return String(n);
+}
+
 function StatCard({ label, value, icon: Icon, trend, viewAllHref }) {
+  const rawValue = value;
+  const displayValue =
+    typeof value === "string" && value.startsWith("₦")
+      ? `₦${compactNumber(value.replace("₦", ""))}`
+      : compactNumber(value);
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <p className="text-xs text-gray-500">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-(--text)">{value}</p>
+          <p
+            className="mt-2 text-2xl font-bold leading-tight text-(--text)"
+            title={String(rawValue)}
+          >
+            {displayValue}
+          </p>
         </div>
-        <div className="rounded-lg bg-(--primary)/10 p-2 text-(--primary)">
+        <div className="mt-1 flex-shrink-0 rounded-lg bg-(--primary)/10 p-2 text-(--primary)">
           <Icon size={16} />
         </div>
       </div>
@@ -174,7 +202,7 @@ export default function AdminDashboard() {
   }, []);
 
   if (isLoading || !stats) {
-    return <Spinner />;
+    return <Spinner label="Loading dashboard" fullScreen />;
   }
 
   return (
