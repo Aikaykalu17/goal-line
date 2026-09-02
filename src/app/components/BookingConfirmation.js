@@ -36,9 +36,16 @@ export default function BookingConfirmation({ booking, bookingId }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const ticketWidthPx = 385;
+  const ticketWidthPx = 400;
   const ticketHeightPx = 200 * 3.7795275591;
-  const innerTicketWidth = 380;
+  const innerTicketWidth = 385;
+  const compactLabelStyle = {
+    fontSize: "0.66rem",
+    lineHeight: 1.25,
+    letterSpacing: "-0.02em",
+    margin: 0,
+    width: "100%",
+  };
 
   async function downloadAsImage() {
     if (!confirmationRef.current) return;
@@ -223,6 +230,17 @@ export default function BookingConfirmation({ booking, bookingId }) {
           <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
             Customer:{" "}
             <span className="font-extrabold">{booking.user_full_name}</span>
+          </p>
+
+          <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
+            Booking Type:{" "}
+            <span className="font-extrabold">
+              {String(booking.notes || "").includes("booking_type:open")
+                ? "Open to others"
+                : String(booking.notes || "").includes("booking_type:solo")
+                  ? "Solo / Individual"
+                  : "Private booking"}
+            </span>
           </p>
 
           <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>

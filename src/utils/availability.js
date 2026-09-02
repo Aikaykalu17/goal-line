@@ -52,9 +52,40 @@ export function generateAllSlots(date) {
   return slots;
 }
 
+export function parseBookingTypeFromNotes(notes, fallback = "solo") {
+  const raw = String(notes || "").trim();
+  if (!raw) return fallback;
+
+  const match = raw.match(/booking_type:\s*(solo|private|open)/i);
+  if (match?.[1]) {
+    return match[1].toLowerCase();
+  }
+
+  return fallback;
+}
+
+export function isBookingBlocking(booking) {
+  if (!booking) return false;
+  if (booking.status === "cancelled") return false;
+
+  const bookingType = String(
+    booking.booking_type || parseBookingTypeFromNotes(booking.notes, "solo"),
+  )
+    .trim()
+    .toLowerCase();
+
+  const players = Number(booking.players ?? 0);
+
+  if (bookingType === "solo" || bookingType === "open") {
+    return false;
+  }
+
+  return players >= 8 || bookingType === "private";
+}
+
 export function isSlotAvailable(start, end, bookings = []) {
   return !bookings.some((booking) => {
-    if (booking.status === "cancelled") return false;
+    if (!isBookingBlocking(booking)) return false;
 
     const bookingStart = new Date(booking.start_at);
     const bookingEnd = new Date(booking.end_at);
@@ -69,7 +100,7 @@ export async function fetchBookingsForDate(date) {
 
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, start_at, end_at, status")
+    .select("id, start_at, end_at, status, players, notes")
     .lt("start_at", end)
     .gt("end_at", start)
     .neq("status", "cancelled")
@@ -85,7 +116,7 @@ export async function fetchBookingsForMonth(date) {
 
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, start_at, end_at, status")
+    .select("id, start_at, end_at, status, players, notes")
     .lt("start_at", end)
     .gt("end_at", start)
     .neq("status", "cancelled")
@@ -99,6 +130,8 @@ export function getFullyBookedDays(bookings = []) {
   const bookedByDay = new Map();
 
   bookings.forEach((booking) => {
+    if (!isBookingBlocking(booking)) return;
+
     const dayKey = format(new Date(booking.start_at), "yyyy-MM-dd");
     const slots = bookedByDay.get(dayKey) || new Set();
 

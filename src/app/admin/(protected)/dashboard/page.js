@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { subDays } from "date-fns";
 import { supabase } from "@/lib/supabaseClient";
 import formatCurrency from "@/utils/formatCurrency";
+import { getDashboardStatsAction } from "./actions";
 import {
   FaCalendarAlt,
   FaClock,
@@ -105,75 +105,15 @@ export default function AdminDashboard() {
     async function loadStats() {
       setIsLoading(true);
 
-      const now = new Date();
-      const last7Start = subDays(now, 7);
-      const prev7Start = subDays(now, 14);
-
-      const [
-        totalBookingsRes,
-        pendingRes,
-        confirmedRes,
-        cancelledRes,
-        last7BookingsRes,
-        prev7BookingsRes,
-        revenueRowsRes,
-        last7RevenueRowsRes,
-        prev7RevenueRowsRes,
-      ] = await Promise.all([
-        supabase.from("bookings").select("*", { count: "exact", head: true }),
-        supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "pending"),
-        supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "confirmed"),
-        supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "cancelled"),
-        supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", last7Start.toISOString()),
-        supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", prev7Start.toISOString())
-          .lt("created_at", last7Start.toISOString()),
-        supabase.from("bookings").select("total").eq("status", "confirmed"),
-        supabase
-          .from("bookings")
-          .select("total")
-          .eq("status", "confirmed")
-          .gte("created_at", last7Start.toISOString()),
-        supabase
-          .from("bookings")
-          .select("total")
-          .eq("status", "confirmed")
-          .gte("created_at", prev7Start.toISOString())
-          .lt("created_at", last7Start.toISOString()),
-      ]);
-
-      if (ignore) return;
-
-      const sum = (rows) =>
-        (rows || []).reduce((acc, r) => acc + (r.total || 0), 0);
-
-      setStats({
-        totalBookings: totalBookingsRes.count || 0,
-        pending: pendingRes.count || 0,
-        confirmed: confirmedRes.count || 0,
-        cancelled: cancelledRes.count || 0,
-        last7Bookings: last7BookingsRes.count || 0,
-        prev7Bookings: prev7BookingsRes.count || 0,
-        totalRevenue: sum(revenueRowsRes.data),
-        last7Revenue: sum(last7RevenueRowsRes.data),
-        prev7Revenue: sum(prev7RevenueRowsRes.data),
-      });
-
-      setIsLoading(false);
+      try {
+        const nextStats = await getDashboardStatsAction();
+        if (ignore) return;
+        setStats(nextStats);
+      } catch (err) {
+        console.error("Error loading dashboard stats:", err);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
     }
 
     loadStats();

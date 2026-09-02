@@ -11,6 +11,18 @@ function isValidDate(value) {
   return value instanceof Date && !Number.isNaN(value.getTime());
 }
 
+export async function parseBookingTypeFromNotes(notes, fallback = "solo") {
+  const raw = String(notes || "").trim();
+  if (!raw) return fallback;
+
+  const match = raw.match(/booking_type:\s*(solo|private|open)/i);
+  if (match?.[1]) {
+    return match[1].toLowerCase();
+  }
+
+  return fallback;
+}
+
 export async function validatePromoCodeAction(code, subtotal = 0) {
   const normalizedCode = String(code || "").trim();
 
@@ -75,6 +87,7 @@ export async function createBookingAction({
   user_email,
   user_phone,
   players,
+  booking_type,
   notes,
   start_at,
   end_at,
@@ -102,6 +115,15 @@ export async function createBookingAction({
   if (!Number.isInteger(playersNumber) || playersNumber < 1) {
     throw new Error("Number of players must be at least 1.");
   }
+
+  const normalizedBookingType = String(
+    booking_type || (playersNumber >= 8 ? "private" : "solo"),
+  )
+    .trim()
+    .toLowerCase();
+
+  const isPrivateBlockingBooking =
+    playersNumber >= 8 && !["solo", "open"].includes(normalizedBookingType);
 
   if (start <= new Date()) {
     throw new Error("Please select a future date and time.");
@@ -141,40 +163,57 @@ export async function createBookingAction({
 
   const calculatedTotal = Math.max(0, calculatedSubtotal - safeDiscount);
 
-  const { data: blocked, error: blockedError } = await supabase
-    .from("blocked")
-    .select("id")
-    .lt("start_at", end.toISOString())
-    .gt("end_at", start.toISOString())
-    .limit(1);
+  if (isPrivateBlockingBooking) {
+    const { data: blocked, error: blockedError } = await supabase
+      .from("blocked")
+      .select("id")
+      .lt("start_at", end.toISOString())
+      .gt("end_at", start.toISOString())
+      .limit(1);
 
-  if (blockedError) {
-    throw new Error("Could not verify availability.");
+    if (blockedError) {
+      throw new Error("Could not verify availability.");
+    }
+
+    if (blocked?.length) {
+      throw new Error(
+        "Sorry, this date or time is blocked. Please pick another time.",
+      );
+    }
+
+    const { data: existingBookings, error: bookingError } = await supabase
+      .from("bookings")
+      .select("id, notes, players")
+      .lt("start_at", end.toISOString())
+      .gt("end_at", start.toISOString())
+      .neq("status", "cancelled")
+      .limit(200);
+
+    if (bookingError) {
+      throw new Error("Could not verify booking availability.");
+    }
+
+    const hasBlockingOverlap = await Promise.all(
+      (existingBookings || []).map(async (existing) => {
+        const existingPlayers = Number(existing.players ?? 0);
+        const existingType = await parseBookingTypeFromNotes(
+          existing.notes,
+          existingPlayers >= 8 ? "private" : "solo",
+        );
+        return existingPlayers >= 8 && existingType !== "open";
+      }),
+    ).then((results) => results.some(Boolean));
+
+    if (hasBlockingOverlap) {
+      throw new Error(
+        "Sorry, this time slot was just booked by someone else. Please pick another time.",
+      );
+    }
   }
 
-  if (blocked?.length) {
-    throw new Error(
-      "Sorry, this date or time is blocked. Please pick another time.",
-    );
-  }
-
-  const { data: existingBookings, error: bookingError } = await supabase
-    .from("bookings")
-    .select("id")
-    .lt("start_at", end.toISOString())
-    .gt("end_at", start.toISOString())
-    .neq("status", "cancelled")
-    .limit(1);
-
-  if (bookingError) {
-    throw new Error("Could not verify booking availability.");
-  }
-
-  if (existingBookings?.length) {
-    throw new Error(
-      "Sorry, this time slot was just booked by someone else. Please pick another time.",
-    );
-  }
+  const notesPayload = [notes?.trim(), `booking_type:${normalizedBookingType}`]
+    .filter(Boolean)
+    .join(" | ");
 
   const { data, error } = await supabase
     .from("bookings")
@@ -183,7 +222,7 @@ export async function createBookingAction({
       user_email: user_email.trim(),
       user_phone: user_phone.trim(),
       players: playersNumber,
-      notes: notes?.trim() || null,
+      notes: notesPayload,
       start_at: start.toISOString(),
       end_at: end.toISOString(),
       duration_minutes: duration,

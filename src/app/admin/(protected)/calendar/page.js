@@ -18,7 +18,11 @@ import { FaChevronLeft, FaChevronRight, FaPlus, FaTimes } from "react-icons/fa";
 import { supabase } from "@/lib/supabaseClient";
 import formatCurrency from "@/utils/formatCurrency";
 import Spinner from "@/app/components/Spinner";
-import { createBlockedDateAction, getBlockedDatesAction } from "./actions";
+import {
+  createBlockedDateAction,
+  getBlockedDatesAction,
+  getMonthBookingsAction,
+} from "./actions";
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -140,24 +144,27 @@ export default function CalendarPage() {
       const monthStart = startOfMonth(viewDate);
       const monthEnd = endOfMonth(viewDate);
 
-      const [bookingsRes, blockedRes] = await Promise.all([
-        supabase
-          .from("bookings")
-          .select("id, start_at, end_at, status, user_full_name, total")
-          .gte("start_at", monthStart.toISOString())
-          .lte("end_at", monthEnd.toISOString())
-          .neq("status", "cancelled"),
-        getBlockedDatesAction({
-          start: monthStart,
-          end: monthEnd,
-        }),
-      ]);
+      try {
+        const [bookings, blocked] = await Promise.all([
+          getMonthBookingsAction({
+            start: monthStart.toISOString(),
+            end: monthEnd.toISOString(),
+          }),
+          getBlockedDatesAction({
+            start: monthStart,
+            end: monthEnd,
+          }),
+        ]);
 
-      if (ignore) return;
+        if (ignore) return;
 
-      setMonthBookings(bookingsRes.data || []);
-      setBlockedDates(blockedRes || []);
-      setIsLoading(false);
+        setMonthBookings(bookings || []);
+        setBlockedDates(blocked || []);
+      } catch (err) {
+        console.error("Error loading calendar data:", err);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
     }
 
     loadData();
@@ -213,6 +220,15 @@ export default function CalendarPage() {
   const selectedDayBookings = monthBookings
     .filter((b) => isSameDay(new Date(b.start_at), selectedDate))
     .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+
+  function formatBlockedReason(blocked) {
+    const date = blocked?.start_at ? new Date(blocked.start_at) : null;
+    const reason = blocked?.reason
+      ? String(blocked.reason).trim()
+      : "maintenance";
+    const labelDate = date ? format(date, "MMM d, yyyy") : "This date";
+    return `${labelDate} is blocked because of ${reason}.`;
+  }
 
   const upcomingBlocked = [...blockedDates].sort(
     (a, b) => new Date(a.start_at) - new Date(b.start_at),
@@ -360,7 +376,9 @@ export default function CalendarPage() {
                         : `${format(new Date(b.start_at), "MMM d")} – ${format(new Date(b.end_at), "MMM d, yyyy")}`}
                     </p>
                     {b.reason && (
-                      <p className="text-xs text-gray-500">{b.reason}</p>
+                      <p className="text-xs text-gray-500">
+                        {formatBlockedReason(b)}
+                      </p>
                     )}
                   </div>
                   <span className="text-xs text-gray-400">All Day</span>

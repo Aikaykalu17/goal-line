@@ -1,5 +1,6 @@
 "use client";
 import {
+  getBookingsAction,
   syncExpiredBookingsAction,
   updateBookingStatusAction,
 } from "./actions";
@@ -82,20 +83,17 @@ export default function BookingsPage() {
         console.error("Could not sync expired bookings:", err);
       }
 
-      let query = supabase
-        .from("bookings")
-        .select("*", { count: "exact" })
-        .order("start_at", { ascending: true });
+      let data = [];
+      let count = 0;
+      let error = null;
 
-      if (activeTab !== "All" && activeTab !== "Expired") {
-        query = query.eq("status", activeTab.toLowerCase());
+      try {
+        const result = await getBookingsAction(activeTab);
+        data = result.data;
+        count = result.count;
+      } catch (err) {
+        error = err;
       }
-
-      if (activeTab === "Expired") {
-        query = query.eq("status", "expired");
-      }
-
-      const { data, count, error } = await query;
 
       if (ignore) return;
 

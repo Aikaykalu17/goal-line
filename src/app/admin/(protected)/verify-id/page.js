@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { FaSearch, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import { supabase } from "@/lib/supabaseClient";
 import formatCurrency from "@/utils/formatCurrency";
 import SpinnerMini from "@/app/components/SpinnerMini";
+import { updateBookingExtraTimeAction, verifyBookingIdAction } from "./actions";
 
 const STATUS_STYLES = {
   confirmed: "bg-green-100 text-green-700",
@@ -50,8 +50,11 @@ function getBookingStatus(booking) {
 export default function VerifyIdPage() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isUpdatingExtraTime, setIsUpdatingExtraTime] = useState(false);
+  const [extraMinutes, setExtraMinutes] = useState(30);
   const [result, setResult] = useState(null); // "not-found" | booking object
   const [hasSearched, setHasSearched] = useState(false);
+  const [extraTimeMessage, setExtraTimeMessage] = useState("");
 
   async function handleVerify(e) {
     e.preventDefault();
@@ -62,26 +65,58 @@ export default function VerifyIdPage() {
     setIsSearching(true);
     setHasSearched(true);
     setResult(null);
+    setExtraTimeMessage("");
 
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
+    const booking = await verifyBookingIdAction(id);
 
     setIsSearching(false);
+    setResult(booking || "not-found");
+  }
 
-    if (error) {
-      // Postgres error 22P02 = malformed input for uuid type (e.g. not a valid UUID at all)
-      console.error("Verify ID error:", error);
-      setResult("not-found");
+  async function handleExtraTimeSave() {
+    if (!result || result === "not-found") return;
+
+    const rawStatus = String(result.status || "")
+      .trim()
+      .toLowerCase();
+    if (rawStatus !== "confirmed") {
+      setExtraTimeMessage(
+        "Extra time editing is available only for confirmed bookings.",
+      );
       return;
     }
 
-    setResult(data || "not-found");
+    setIsUpdatingExtraTime(true);
+    setExtraTimeMessage("");
+
+    try {
+      const payload = await updateBookingExtraTimeAction(
+        result.id,
+        Number(extraMinutes) || 0,
+      );
+      setResult((current) => ({
+        ...current,
+        end_at: payload.newEndAt,
+        duration_minutes:
+          Number(current.duration_minutes || 0) + payload.minutesAdded,
+        total: payload.newTotal,
+      }));
+      setExtraTimeMessage(
+        `Extra time added successfully: ${payload.minutesAdded} minutes.`,
+      );
+    } catch (error) {
+      setExtraTimeMessage(error?.message || "Could not update extra time.");
+    } finally {
+      setIsUpdatingExtraTime(false);
+    }
   }
 
   const isBookingResult = result && result !== "not-found";
+  const rawBookingStatus = isBookingResult
+    ? String(result.status || "")
+        .trim()
+        .toLowerCase()
+    : null;
   const bookingStatus = isBookingResult ? getBookingStatus(result) : null;
   const resultCardClasses =
     bookingStatus === "confirmed"
@@ -139,7 +174,7 @@ export default function VerifyIdPage() {
           )}
 
           {isBookingResult && (
-            <div className={`rounded-lg p-4 space-y-2 ${resultCardClasses}`}>
+            <div className={`rounded-lg p-4 space-y-3 ${resultCardClasses}`}>
               <p className="flex flex-col items-center gap-2 font-semibold text-green-700 md:flex md:flex-row md:items-center">
                 <span className="flex items-center gap-2">
                   <FaCheckCircle />
@@ -175,11 +210,56 @@ export default function VerifyIdPage() {
                 <span className="font-medium">{result.user_full_name}</span>
               </p>
               <p className="text-sm font-bold">
+                Booking Type:{" "}
+                <span className="font-medium">
+                  {String(result.notes || "").includes("booking_type:open")
+                    ? "Open to others"
+                    : String(result.notes || "").includes("booking_type:solo")
+                      ? "Solo / Individual"
+                      : "Private booking"}
+                </span>
+              </p>
+              <p className="text-sm font-bold">
                 Amount:{" "}
                 <span className="font-medium">
                   ₦{formatCurrency(result.total)}
                 </span>
               </p>
+
+              {rawBookingStatus === "confirmed" ? (
+                <div className="rounded border border-dashed border-gray-300 bg-white/60 p-3">
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-gray-600">
+                    Add extra time (minutes)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="15"
+                      step="15"
+                      value={extraMinutes}
+                      onChange={(e) => setExtraMinutes(e.target.value)}
+                      className="flex-1 rounded border border-gray-300 p-2 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleExtraTimeSave}
+                      disabled={isUpdatingExtraTime}
+                      className="rounded bg-(--primary) px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      {isUpdatingExtraTime ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                  {extraTimeMessage && (
+                    <p className="mt-2 text-xs font-medium text-gray-700">
+                      {extraTimeMessage}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-800">
+                  Extra time editing is available only for confirmed bookings.
+                </div>
+              )}
             </div>
           )}
         </div>

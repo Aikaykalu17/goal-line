@@ -3,10 +3,16 @@
 import { useEffect, useReducer, useState } from "react";
 import confetti from "canvas-confetti";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOptions,
+  ListboxOption,
+} from "@headlessui/react";
 
 import { differenceInMinutes, format, parse } from "date-fns";
 
-import { FaArrowRight } from "react-icons/fa";
+import { FaArrowRight, FaCheck, FaChevronDown } from "react-icons/fa";
 
 import Calendar from "@/app/components/Calendar";
 import SelectTime from "@/app/components/SelectTime";
@@ -38,12 +44,34 @@ const initialState = {
   fullName: "",
   email: "",
   phone: "",
-  players: "",
+  playerType: "solo",
+  teamMode: "private",
+  players: "1",
   notes: "",
   promoCode: "",
   discountApplied: 0,
   errorMessage: "",
 };
+
+function normalizeTeamMode(value) {
+  const normalized = String(value || "private")
+    .trim()
+    .toLowerCase();
+
+  if (["open", "open_to_others", "play_with_others"].includes(normalized)) {
+    return "open";
+  }
+
+  return "private";
+}
+
+function getBookingTypeLabel({ playerType, teamMode }) {
+  if (playerType === "solo") return "Solo / Individual";
+
+  return normalizeTeamMode(teamMode) === "open"
+    ? "Open to others"
+    : "Private booking";
+}
 
 // ✅ Reducer
 function bookingReducer(state, action) {
@@ -163,12 +191,22 @@ export default function Booking() {
     const endDateTime = parse(state.endTime, "hh:mm a", state.selectedDate);
 
     try {
+      const bookingType =
+        state.playerType === "solo"
+          ? "solo"
+          : normalizeTeamMode(state.teamMode);
+
+      const notesPayload = [state.notes?.trim(), `booking_type:${bookingType}`]
+        .filter(Boolean)
+        .join(" | ");
+
       const result = await createBookingAction({
         user_full_name: state.fullName,
         user_email: state.email,
         user_phone: state.phone,
         players: state.players,
-        notes: state.notes,
+        booking_type: bookingType,
+        notes: notesPayload,
         start_at: startDateTime.toISOString(),
         end_at: endDateTime.toISOString(),
         duration_minutes: minutes,
@@ -339,21 +377,112 @@ export default function Booking() {
               required
               name="phone"
             />
-            <input
-              type="number"
-              placeholder="Number of Players"
-              value={state.players}
-              min="1"
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_USER",
-                  payload: { players: e.target.value },
-                })
-              }
-              className="border border-gray-400 rounded p-2 w-full text-xs"
-              required
-              name="players"
-            />
+            <div className="space-y-2">
+              <Listbox
+                value={state.playerType}
+                onChange={(nextValue) => {
+                  const nextPlayers = nextValue === "solo" ? "1" : "8";
+                  dispatch({
+                    type: "SET_USER",
+                    payload: {
+                      playerType: nextValue,
+                      teamMode: nextValue === "solo" ? "private" : "private",
+                      players: nextPlayers,
+                    },
+                  });
+                }}
+              >
+                <div className="relative">
+                  <ListboxButton className="flex w-full items-center justify-between rounded border border-gray-400 bg-white p-2 text-left text-xs text-(--text)">
+                    <span>
+                      {state.playerType === "solo"
+                        ? "Solo / Individual"
+                        : "Team / Group"}
+                    </span>
+                    <FaChevronDown size={12} className="text-gray-400" />
+                  </ListboxButton>
+
+                  <ListboxOptions className="absolute z-20 mt-1 w-full overflow-auto rounded border border-gray-200 bg-white p-1 text-xs shadow-lg">
+                    {[
+                      { value: "solo", label: "Solo / Individual" },
+                      { value: "team", label: "Team / Group" },
+                    ].map((option) => (
+                      <ListboxOption
+                        key={option.value}
+                        value={option.value}
+                        className="flex cursor-pointer items-center justify-between rounded px-2 py-2 hover:bg-(--primary)/10 data-selected:bg-(--primary)/10 data-selected:font-semibold"
+                      >
+                        <span>{option.label}</span>
+                        <FaCheck
+                          size={10}
+                          className="hidden text-(--primary) data-selected:block"
+                        />
+                      </ListboxOption>
+                    ))}
+                  </ListboxOptions>
+                </div>
+              </Listbox>
+
+              {state.playerType === "team" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      placeholder="Number of Players"
+                      value={state.players}
+                      min="8"
+                      step="1"
+                      onChange={(e) =>
+                        dispatch({
+                          type: "SET_USER",
+                          payload: { players: e.target.value },
+                        })
+                      }
+                      className="flex-1 border border-gray-400 rounded p-2 w-full text-xs"
+                      required
+                      name="players"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600">
+                      Booking Type
+                    </label>
+
+                    <div className="flex gap-2">
+                      {[
+                        { value: "private", label: "Private booking" },
+                        { value: "open", label: "Open to others" },
+                      ].map((option) => (
+                        <label
+                          key={option.value}
+                          className={`flex flex-1 cursor-pointer items-center gap-2 rounded border px-2 py-2 text-[11px] font-medium transition ${
+                            state.teamMode === option.value
+                              ? "border-(--primary) bg-(--primary)/5 text-(--primary)"
+                              : "border-gray-300 bg-white text-gray-700"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="teamBookingMode"
+                            value={option.value}
+                            checked={state.teamMode === option.value}
+                            onChange={() =>
+                              dispatch({
+                                type: "SET_USER",
+                                payload: { teamMode: option.value },
+                              })
+                            }
+                            className="accent-(--primary)"
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <textarea
               placeholder="Notes"
               value={state.notes}
@@ -417,6 +546,18 @@ export default function Booking() {
           </p>
 
           <p className="text-sm font-bold">
+            {" "}
+            Booking Type:{" "}
+            <span className="font-extrabold">
+              {getBookingTypeLabel({
+                playerType: state.playerType,
+                teamMode: state.teamMode,
+              })}
+            </span>
+          </p>
+
+          <p className="text-sm font-bold">
+            {" "}
             Date:{" "}
             <span className="font-extrabold">
               {format(state.selectedDate, "EEEE, MMMM d, yyyy")}

@@ -30,7 +30,18 @@ export default function Calendar({ selectedDate, onSelectDate }) {
   const [viewDate, setViewDate] = useState(new Date());
   const [fullyBookedDays, setFullyBookedDays] = useState(new Set());
   const [blockedDays, setBlockedDays] = useState(new Set());
+  const [blockedReasons, setBlockedReasons] = useState([]);
   const today = startOfDay(new Date());
+
+  function getBlockedLabel(blocked) {
+    const date = blocked?.start_at ? new Date(blocked.start_at) : null;
+    const reason = blocked?.reason
+      ? String(blocked.reason).trim()
+      : "maintenance";
+    const formattedDate = date ? format(date, "MMM d, yyyy") : "This date";
+    const sentenceReason = reason ? ` because of ${reason}` : "";
+    return `Please we're sorry. ${formattedDate} is unavilable for booking${sentenceReason}.`;
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -49,6 +60,7 @@ export default function Calendar({ selectedDate, onSelectDate }) {
 
         setFullyBookedDays(getFullyBookedDays(bookings));
         setBlockedDays(getBlockedDaySet(blocked));
+        setBlockedReasons((blocked || []).filter(Boolean).slice(0, 4));
       } catch (error) {
         console.error("Could not load calendar availability:", error);
         if (!ignore) {
@@ -156,6 +168,19 @@ export default function Calendar({ selectedDate, onSelectDate }) {
           );
         })}
       </div>
+
+      {blockedReasons.length > 0 && (
+        <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-red-700">
+            unavailable
+          </p>
+          <ul className="mt-2 space-y-1 text-xs text-red-700">
+            {blockedReasons.map((blocked) => (
+              <li key={blocked.id}>{getBlockedLabel(blocked)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

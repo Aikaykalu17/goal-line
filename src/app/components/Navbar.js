@@ -47,7 +47,7 @@ function Navbar() {
             height={300}
             priority
             loading="eager"
-            sizes="(max-width: 768px) 100px, 120px"
+            sizes="(max-width: 768px) 500px, 500px"
             style={{ objectFit: "contain" }}
           />
         </div>

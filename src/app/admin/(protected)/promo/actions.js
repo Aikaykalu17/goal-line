@@ -1,20 +1,11 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
-
-async function requireAdmin() {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    throw new Error("Unauthorized.");
-  }
-
-  return data.user;
-}
+import { requireAdmin } from "@/lib/authGuard";
 
 export async function getPromoCodesAction() {
+  await requireAdmin();
+
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("promo")

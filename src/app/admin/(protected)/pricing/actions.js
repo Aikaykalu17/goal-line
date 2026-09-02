@@ -1,21 +1,12 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { requireAdmin } from "@/lib/authGuard";
 import { DEFAULT_PRICING } from "@/lib/pricing";
 
-async function requireAdmin() {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    throw new Error("Unauthorized.");
-  }
-
-  return data.user;
-}
-
 export async function getPricingConfigAction() {
+  await requireAdmin();
+
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("pricing")

@@ -2,21 +2,32 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { requireAdmin } from "@/lib/authGuard";
 
-async function requireAuthenticatedUser() {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
+// Admin-only read of the current month's bookings for the calendar grid.
+// Includes customer name and price, so it must never be fetched with the
+// public anon key from the browser — it goes through this guarded action.
+export async function getMonthBookingsAction({ start, end }) {
+  await requireAdmin();
 
-  if (error || !data.user) {
-    throw new Error("Unauthorized.");
+  const supabase = createSupabaseAdminClient();
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("id, start_at, end_at, status, user_full_name, total")
+    .gte("start_at", start)
+    .lte("end_at", end)
+    .neq("status", "cancelled");
+
+  if (error) {
+    throw new Error(error.message);
   }
 
-  return data.user;
+  return data || [];
 }
 
 export async function createBlockedDateAction({ start_at, end_at, reason }) {
-  const user = await requireAuthenticatedUser();
+  const user = await requireAdmin();
   const supabase = createSupabaseAdminClient();
 
   const start = new Date(start_at);
@@ -28,6 +39,17 @@ export async function createBlockedDateAction({ start_at, end_at, reason }) {
     start >= end
   ) {
     throw new Error("Invalid date range.");
+  }
+
+  const safeReason = String(reason || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
+
+  if (safeReason && !/^[a-z]+$/.test(safeReason)) {
+    throw new Error(
+      "Reason must be a single word such as maintenance, party, or repair.",
+    );
   }
 
   const { data: existing, error: overlapError } = await supabase
@@ -48,7 +70,7 @@ export async function createBlockedDateAction({ start_at, end_at, reason }) {
   const { error } = await supabase.from("blocked").insert({
     start_at: start.toISOString(),
     end_at: end.toISOString(),
-    reason: reason?.trim() || null,
+    reason: safeReason || null,
     created_by: user.id,
   });
 
@@ -61,7 +83,7 @@ export async function createBlockedDateAction({ start_at, end_at, reason }) {
 }
 
 export async function getBlockedDatesAction({ start, end }) {
-  await requireAuthenticatedUser();
+  await requireAdmin();
 
   const supabase = createSupabaseAdminClient();
   const startDate = new Date(start);

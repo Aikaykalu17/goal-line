@@ -15,7 +15,7 @@ export async function getBlockedDatesAction({ start, end }) {
 
   const { data, error } = await supabase
     .from("blocked")
-    .select("id, start_at, end_at")
+    .select("id, start_at, end_at, reason")
     .lte("start_at", endDate.toISOString())
     .gte("end_at", startDate.toISOString())
     .order("start_at", { ascending: true });

@@ -90,15 +90,17 @@ export default function AdminProtectedLayout({ children }) {
     <div className="min-h-screen bg-[#f3f4f3] text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-[1800px]">
         <aside className="hidden min-h-screen w-60 shrink-0 flex-col bg-(--forest) text-white md:flex">
-          <div className="flex items-center gap-3 border-b border-white/10 px-5 py-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-sm font-bold shadow-inner">
-              G
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold tracking-[0.22em] text-white/80">
-                GoalLine Turf
-              </p>
-              <p className="text-xs text-white/60">Admin Panel</p>
+          <div className="flex items-center justify-center border-b border-white/10 px-5 py-6">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-bold text-white shadow-inner">
+                G
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] font-semibold tracking-[0.22em] text-white/80">
+                  GoalLine Turf
+                </p>
+                <p className="text-xs text-white/60">Admin Panel</p>
+              </div>
             </div>
           </div>
 
@@ -111,10 +113,10 @@ export default function AdminProtectedLayout({ children }) {
                   type="button"
                   key={href}
                   onClick={() => handleNavigation(href)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition cursor-pointer ${
                     active
-                      ? "bg-white/10 font-semibold text-white shadow-inner"
-                      : "text-white/75 hover:bg-white/5 hover:text-white"
+                      ? "bg-white/10 font-semibold text-white shadow-inner cursor-pointer"
+                      : "text-white/75 hover:bg-white/5 hover:text-white cursor-pointer"
                   }`}
                 >
                   <Icon size={14} />
@@ -139,7 +141,7 @@ export default function AdminProtectedLayout({ children }) {
           <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm md:hidden">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--forest) text-sm font-bold text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--forest) text-sm font-bold text-white">
                   G
                 </div>
                 <div>

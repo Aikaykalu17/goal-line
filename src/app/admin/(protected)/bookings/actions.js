@@ -2,23 +2,42 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { requireAdmin } from "@/lib/authGuard";
 
 const ALLOWED_STATUSES = ["pending", "confirmed", "cancelled", "expired"];
 
-async function requireAuthenticatedUser() {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
+// Admin-only read. Runs on the server with the service-role client so the
+// bookings list (which includes customer name/email/phone) is never fetched
+// with the public anon key from the browser.
+export async function getBookingsAction(tab = "All") {
+  await requireAdmin();
 
-  if (error || !data.user) {
-    throw new Error("Unauthorized.");
+  const supabase = createSupabaseAdminClient();
+
+  let query = supabase
+    .from("bookings")
+    .select("*", { count: "exact" })
+    .order("start_at", { ascending: true });
+
+  if (tab && tab !== "All" && tab !== "Expired") {
+    query = query.eq("status", tab.toLowerCase());
   }
 
-  return data.user;
+  if (tab === "Expired") {
+    query = query.eq("status", "expired");
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return { data: data || [], count: count || 0 };
 }
 
 export async function updateBookingStatusAction(id, newStatus) {
-  await requireAuthenticatedUser();
+  await requireAdmin();
 
   if (!id) throw new Error("Booking ID is required.");
   if (!ALLOWED_STATUSES.includes(newStatus)) {
@@ -44,7 +63,7 @@ export async function updateBookingStatusAction(id, newStatus) {
 }
 
 export async function syncExpiredBookingsAction() {
-  await requireAuthenticatedUser();
+  await requireAdmin();
 
   const supabase = createSupabaseAdminClient();
   const today = new Date();

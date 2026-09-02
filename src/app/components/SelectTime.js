@@ -46,10 +46,30 @@ function generateTimesOfDay(from, to) {
 }
 
 function toBusyIntervals(bookings) {
-  return bookings.map((b) => ({
-    start: parseISO(b.start_at),
-    end: parseISO(b.end_at),
-  }));
+  return bookings
+    .filter((booking) => {
+      if (!booking || booking.status === "cancelled") return false;
+
+      const bookingType = String(
+        booking.booking_type ||
+          (booking.notes || "").match(
+            /booking_type:\s*(solo|private|open)/i,
+          )?.[1] ||
+          "solo",
+      )
+        .trim()
+        .toLowerCase();
+
+      if (bookingType === "solo" || bookingType === "open") {
+        return false;
+      }
+
+      return Number(booking.players ?? 0) >= 8 || bookingType === "private";
+    })
+    .map((b) => ({
+      start: parseISO(b.start_at),
+      end: parseISO(b.end_at),
+    }));
 }
 
 function isWithinBusyInterval(time, busyIntervals) {
