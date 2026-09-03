@@ -3,9 +3,9 @@ import ProcessCard from "./ProcessCard";
 
 function ProcessList() {
   return (
-    <div className="flex flex-col gap-8 md:flex md:flex-row w-full md:justify-evenly">
-      {process.map((p) => (
-        <ProcessCard key={p.id} {...p} />
+    <div className="flex flex-col gap-2 w-full md:flex-row md:justify-evenly md:gap-8">
+      {process.map((p, index) => (
+        <ProcessCard key={p.id} {...p} isLast={index === process.length - 1} />
       ))}
     </div>
   );

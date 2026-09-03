@@ -1,20 +1,20 @@
-import PrivacySection from "./PrivacySection";
 import booking from "@/data/booking";
+import PrivacySection from "./PrivacySection";
 
-function BookingCard() {
+function PrivacyCard() {
   return (
-    <div className="flex flex-col gap-4 md:grid md:grid-cols-2 h-full">
-      {booking.map((b) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+      {booking.map((item) => (
         <PrivacySection
-          key={b.id}
-          id={b.id}
-          title={b.title}
-          description={b.description}
-          icon={b.icon}
+          key={item.id}
+          id={item.id}
+          title={item.title}
+          description={item.description}
+          icon={item.icon}
         />
       ))}
     </div>
   );
 }
 
-export default BookingCard;
+export default PrivacyCard;

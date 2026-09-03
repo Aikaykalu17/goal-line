@@ -82,6 +82,24 @@ export async function createBlockedDateAction({ start_at, end_at, reason }) {
   return { ok: true };
 }
 
+export async function unblockDateAction(id) {
+  await requireAdmin();
+
+  if (!id) {
+    throw new Error("A blocked date is required.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("blocked").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/admin/calendar");
+  return { ok: true };
+}
+
 export async function getBlockedDatesAction({ start, end }) {
   await requireAdmin();
 

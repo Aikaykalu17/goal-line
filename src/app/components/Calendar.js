@@ -40,7 +40,7 @@ export default function Calendar({ selectedDate, onSelectDate }) {
       : "maintenance";
     const formattedDate = date ? format(date, "MMM d, yyyy") : "This date";
     const sentenceReason = reason ? ` because of ${reason}` : "";
-    return `Please we're sorry. ${formattedDate} is unavilable for booking${sentenceReason}.`;
+    return `Please, we're sorry. ${formattedDate} is unavilable for booking${sentenceReason}.`;
   }
 
   useEffect(() => {

@@ -43,16 +43,14 @@ function Navbar() {
           <Image
             src={open ? "/whiteLogo.webp" : "/logo.webp"}
             alt="Goal Line Turf logo"
-            width={150}
-            height={300}
+            width={140}
+            height={40}
             priority
-            loading="eager"
-            sizes="(max-width: 768px) 500px, 500px"
-            style={{ objectFit: "contain" }}
+            className="h-8 sm:h-10 w-auto object-contain"
           />
         </div>
         {/* Nav links for desktop view */}
-        <nav className="hidden md:flex gap-2 lg:flex landscape:flex">
+        <nav className="hidden landscape:flex md:flex items-center gap-1 lg:gap-2">
           {navLinks.map(({ href, label }) => {
             const isActive = pathname === href;
 
@@ -60,15 +58,15 @@ function Navbar() {
               <Link
                 key={href}
                 href={href}
-                aria-current={isActive ? "page" : undefined} // screen reader support
+                aria-current={isActive ? "page" : undefined}
                 className={`
-  px-4 py-3 text-xs font-bold border-b-2 transition-all duration-300 ease-out hover:translate-y-1 cursor-pointer text-(--text)
-  ${
-    isActive
-      ? "text-(--text) border-b-(--primary)"
-      : "text-(--text) border-b-transparent hover:border-b-(--primary) hover:text-(--text)"
-  }
-`}
+          px-3 lg:px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200
+          ${
+            isActive
+              ? "text-(--primary) bg-(--primary)/10"
+              : "text-(--text)/80 hover:text-(--text) hover:bg-(--bg)/50"
+          }
+        `}
               >
                 {label}
               </Link>
@@ -78,7 +76,7 @@ function Navbar() {
         <Link
           href="/booking"
           onClick={() => dispatch({ type: "RESET" })}
-          className="hidden md:block landscape:flex py-4 px-8 rounded-lg bg-(--primary)  text-xs text-(--white) font-bold cursor-pointer border md:hover:border-none md:hover:text-(--text) transition-all duration-300 ease-out hover:translate-y-1"
+          className="hidden landscape:flex md:flex items-center py-2.5 px-5 rounded-xl bg-(--primary) text-white text-sm font-bold transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
         >
           Book Now
         </Link>

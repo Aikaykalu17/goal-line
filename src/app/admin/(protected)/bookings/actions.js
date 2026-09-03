@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/authGuard";
+import {
+  sendAdminCancellationAlertEmail,
+  sendExpiredBookingEmail,
+  sendPaymentConfirmationEmail,
+  sendPendingBookingReminderEmail,
+} from "@/lib/email";
 
 const ALLOWED_STATUSES = ["pending", "confirmed", "cancelled", "expired"];
 
@@ -46,6 +52,22 @@ export async function updateBookingStatusAction(id, newStatus) {
 
   const supabase = createSupabaseAdminClient();
 
+  const { data: existingBooking, error: fetchError } = await supabase
+    .from("bookings")
+    .select(
+      "id, user_full_name, user_email, status, notes, players, start_at, end_at, total",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(fetchError.message);
+  }
+
+  if (!existingBooking) {
+    throw new Error("Booking not found.");
+  }
+
   const { error } = await supabase
     .from("bookings")
     .update({ status: newStatus })
@@ -53,6 +75,44 @@ export async function updateBookingStatusAction(id, newStatus) {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  try {
+    if (newStatus === "pending" && existingBooking.status !== "pending") {
+      await sendPendingBookingReminderEmail({
+        booking: existingBooking,
+        customerEmail: existingBooking.user_email,
+        customerName: existingBooking.user_full_name,
+      });
+    }
+
+    if (newStatus === "confirmed" && existingBooking.status !== "confirmed") {
+      await sendPaymentConfirmationEmail({
+        booking: existingBooking,
+        customerEmail: existingBooking.user_email,
+        customerName: existingBooking.user_full_name,
+      });
+    }
+
+    if (newStatus === "cancelled" && existingBooking.status !== "cancelled") {
+      await sendAdminCancellationAlertEmail({
+        booking: existingBooking,
+        customerEmail: existingBooking.user_email,
+        customerName: existingBooking.user_full_name,
+        customerPhone: existingBooking.user_phone || "Not provided",
+        reason: "Booking cancelled by admin.",
+      });
+    }
+
+    if (newStatus === "expired" && existingBooking.status !== "expired") {
+      await sendExpiredBookingEmail({
+        booking: existingBooking,
+        customerEmail: existingBooking.user_email,
+        customerName: existingBooking.user_full_name,
+      });
+    }
+  } catch (emailError) {
+    console.error("Status transition email failed:", emailError);
   }
 
   revalidatePath("/admin/bookings");
@@ -71,22 +131,22 @@ export async function syncExpiredBookingsAction() {
 
   const { data: pendingBookings, error: fetchError } = await supabase
     .from("bookings")
-    .select("id, created_at")
+    .select(
+      "id, created_at, user_full_name, user_email, status, notes, players, start_at, end_at, total",
+    )
     .eq("status", "pending");
 
   if (fetchError) {
     throw new Error(fetchError.message);
   }
 
-  const expiredIds = (pendingBookings || [])
-    .filter((booking) => {
-      const createdAt = booking?.created_at
-        ? new Date(booking.created_at)
-        : null;
-      if (!createdAt || Number.isNaN(createdAt.getTime())) return false;
-      return createdAt < today;
-    })
-    .map((booking) => booking.id);
+  const expiredBookings = (pendingBookings || []).filter((booking) => {
+    const createdAt = booking?.created_at ? new Date(booking.created_at) : null;
+    if (!createdAt || Number.isNaN(createdAt.getTime())) return false;
+    return createdAt < today;
+  });
+
+  const expiredIds = expiredBookings.map((booking) => booking.id);
 
   if (!expiredIds.length) {
     return { updated: 0 };
@@ -99,6 +159,18 @@ export async function syncExpiredBookingsAction() {
 
   if (updateError) {
     throw new Error(updateError.message);
+  }
+
+  for (const booking of expiredBookings) {
+    try {
+      await sendExpiredBookingEmail({
+        booking,
+        customerEmail: booking.user_email,
+        customerName: booking.user_full_name,
+      });
+    } catch (emailError) {
+      console.error("Expired booking email failed:", emailError);
+    }
   }
 
   revalidatePath("/admin/bookings");

@@ -73,7 +73,7 @@ function StatCard({ label, value, icon: Icon, trend, viewAllHref }) {
             {displayValue}
           </p>
         </div>
-        <div className="mt-1 flex-shrink-0 rounded-lg bg-(--primary)/10 p-2 text-(--primary)">
+        <div className="mt-1 shrink-0 rounded-lg bg-(--primary)/10 p-2 text-(--primary)">
           <Icon size={16} />
         </div>
       </div>

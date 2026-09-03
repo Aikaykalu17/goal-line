@@ -33,7 +33,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${kanit.variable} h-full antialiased`}>
+    <html lang="en" className={`${kanit.variable} h-full antialiased `}>
       <body className="flex flex-col min-h-screen">
         <a href="#main-content" className="sr-only focus:not-sr-only "></a>
         <header>

@@ -1,49 +1,64 @@
 import {
-  FaCalendarCheck, // Advance Booking
-  FaCreditCard, // Payment
-  FaTimesCircle, // Cancellation
-  FaCalendarPlus, // Rescheduling
-  FaUserTimes, // No Show Policy
+  FaCalendarAlt,
+  FaClock,
+  FaLock,
+  FaTags,
+  FaCheckCircle,
+  FaMoneyBillWave,
+  FaUsers,
 } from "react-icons/fa";
 
 const booking = [
   {
     id: 1,
-    title: "Advance Booking",
+    title: "Today’s availability",
     description:
-      "All bookings must be made at least 1 hour in advance to ensure availability",
-    icon: (
-      <FaCalendarCheck size={50} color="var(--primary)" aria-hidden="true" />
-    ),
+      "The booking calendar shows the current day’s open playing window. Greyed-out dates or times tell you the turf is unavailable, while green indicates a time that is still open and ready to book.",
+    icon: <FaCalendarAlt size={50} color="var(--primary)" aria-hidden="true" />,
   },
   {
     id: 2,
-    title: "Payment",
+    title: "Private booking control",
     description:
-      "Payment is made on arrival at the turf. We do not offer online payments at the moment.",
-    icon: <FaCreditCard size={50} color="var(--primary)" aria-hidden="true" />,
+      "A Team / Group booking can be set to Private booking. That means the selected time becomes unavailable to everyone else for the full slot, which is ideal for closed sessions, private matches, or internal club play.",
+    icon: <FaLock size={50} color="var(--primary)" aria-hidden="true" />,
   },
   {
     id: 3,
-    title: "Cancellations",
+    title: "Open-to-others bookings",
     description:
-      "Cancellations made less than 2 hours before your booking time will be charged 50% of the total fee.",
-    icon: <FaTimesCircle size={50} color="var(--primary)" aria-hidden="true" />,
+      "A Team / Group booking can also be set to Open to others. This keeps the slot visible for other players and follows the same logic as solo bookings, so it does not block other people from using that period.",
+    icon: <FaUsers size={50} color="var(--primary)" aria-hidden="true" />,
   },
   {
     id: 4,
-    title: "Rescheduling",
+    title: "Notes that help us serve you better",
     description:
-      "You can reschedule your booking up to 3 hours before your booking time, subject to availability.",
-    icon: (
-      <FaCalendarPlus size={50} color="var(--primary)" aria-hidden="true" />
-    ),
+      "The Notes field is useful for telling us about your booking details, special requests, team preferences, or any relevant information that helps us prepare for your game and keep the experience smooth.",
+    icon: <FaClock size={50} color="var(--primary)" aria-hidden="true" />,
   },
   {
     id: 5,
-    title: "No Show Policy",
-    description: "No shows will be charged the full booking amount.",
-    icon: <FaUserTimes size={50} color="var(--primary)" aria-hidden="true" />,
+    title: "Promo savings and expiry",
+    description:
+      "Promo codes can reduce your total cost when valid. Each code has its own conditions, discount percentage, and expiry date, so the system checks the code as part of the booking before final confirmation.",
+    icon: <FaTags size={50} color="var(--primary)" aria-hidden="true" />,
+  },
+  {
+    id: 6,
+    title: "Confirmed status and extra time",
+    description:
+      "Once payment is made, a booking becomes confirmed. If the players want to continue after the original window ends, extra minutes can be added to a confirmed ticket, allowing the game to continue without leaving the pitch too early.",
+    icon: <FaCheckCircle size={50} color="var(--primary)" aria-hidden="true" />,
+  },
+  {
+    id: 7,
+    title: "Flexible pricing",
+    description:
+      "Pricing is managed centrally by the admin team and can be adjusted for nights, weekends, or special periods. This makes it possible to increase or reduce rates based on demand, schedule, or operational strategy.",
+    icon: (
+      <FaMoneyBillWave size={50} color="var(--primary)" aria-hidden="true" />
+    ),
   },
 ];
 

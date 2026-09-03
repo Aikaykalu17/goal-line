@@ -1,10 +1,13 @@
 "use server";
 
+import { unstable_noStore as noStore } from "next/cache";
+
 import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/authGuard";
 import { DEFAULT_PRICING } from "@/lib/pricing";
 
 export async function getPricingConfigAction() {
+  noStore();
   await requireAdmin();
 
   const supabase = createSupabaseAdminClient();

@@ -15,7 +15,7 @@ const faqs = [
     id: 3,
     question: "Where are you located?",
     answer:
-      "We’re located at GoalLine Turf, [insert your actual street/location here], Abuja, Nigeria.",
+      "We’re located at No. 14 Aminu Kano Crescent, Wuse II, Abuja, Nigeria.",
   },
   {
     id: 4,

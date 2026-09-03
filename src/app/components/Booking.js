@@ -10,9 +10,17 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 
-import { differenceInMinutes, format, parse } from "date-fns";
+import { format, parse } from "date-fns";
 
-import { FaArrowRight, FaCheck, FaChevronDown } from "react-icons/fa";
+import {
+  FaUsers,
+  FaEnvelope,
+  FaArrowRight,
+  FaPhone,
+  FaCheck,
+  FaUser,
+  FaChevronDown,
+} from "react-icons/fa";
 
 import Calendar from "@/app/components/Calendar";
 import SelectTime from "@/app/components/SelectTime";
@@ -22,14 +30,20 @@ import {
   generateAllSlots,
 } from "@/utils/availability";
 import formatCurrency from "../../utils/formatCurrency";
+import { DEFAULT_PRICING } from "@/lib/pricing";
 
 import PromoCodeInput from "./PromoCode";
 import SpinnerMini from "./SpinnerMini";
 import BookingConfirmation from "./BookingConfirmation";
 import AvailabilityTimeline from "./AvailabilityTimeline";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { createBookingAction } from "@/app/(site)/booking/actions";
 import { getRateForDate } from "@/lib/pricing";
+import { getPricingConfigAction } from "../admin/(protected)/pricing/actions";
+
+import { parseTimeString } from "@/utils/time";
+import getDurationDisplay from "@/utils/durationDisplay";
+import { getDurationHours } from "@/utils/hours";
 
 // ✅ Initial state
 const initialState = {
@@ -125,11 +139,22 @@ function bookingReducer(state, action) {
 export default function Booking() {
   const [state, dispatch] = useReducer(bookingReducer, initialState);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [livePricing, setLivePricing] = useState(DEFAULT_PRICING);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const step = Number(searchParams.get("step")) || 1;
+
+  // Fetch live pricing on mount
+  useEffect(() => {
+    getPricingConfigAction()
+      .then((pricing) => setLivePricing(pricing || DEFAULT_PRICING))
+      .catch((err) => {
+        console.error("Could not load pricing:", err);
+        setLivePricing(DEFAULT_PRICING);
+      });
+  }, []);
 
   function goToStep(n) {
     router.push(`${pathname}?step=${n}`);
@@ -143,26 +168,26 @@ export default function Booking() {
       : null;
 
   const ratePerHour = selectedStartDateTime
-    ? getRateForDate(selectedStartDateTime)
+    ? getRateForDate(selectedStartDateTime, livePricing)
     : 5000;
 
-  const minutes =
-    state.startTime && state.endTime
-      ? differenceInMinutes(
-          parse(state.endTime, "hh:mm a", state.selectedDate),
-          parse(state.startTime, "hh:mm a", state.selectedDate),
-        )
-      : 0;
+  const selectedEndDateTime = parseTimeString(
+    state.endTime,
+    state.selectedDate,
+  );
 
-  const duration = minutes / 60; // 30 mins = 0.5
-  const subtotal = duration * ratePerHour; // 0.5 * 5000 = 2500
-  const discount = state.discountApplied || 0;
-  const total = subtotal - discount;
+  // ✅ New billing + display logic
+  const durationHours = getDurationHours(
+    selectedStartDateTime,
+    selectedEndDateTime,
+  ); // 1.5 for 90min
 
-  const hoursDisplay =
-    minutes >= 60
-      ? `${duration} hour${duration > 1 ? "s" : ""}` // "1.5 hours"
-      : `${minutes} mins`; // "30 mins"
+  const hoursDisplay = getDurationDisplay(
+    selectedStartDateTime,
+    selectedEndDateTime,
+  ); // "1 hr 30 mins"
+
+  const subtotal = durationHours * ratePerHour;
 
   //  Availability effect
   useEffect(() => {
@@ -277,6 +302,69 @@ export default function Booking() {
         {/* Step 1: Date & Time */}
         {step === 1 && (
           <>
+            {/* Availability legend */}
+            <div className="w-full rounded-2xl border border-(--primary)/20 bg-(--primary)/5 px-4 py-3 sm:px-5 sm:py-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-2.5 rounded-lg bg-gray-50/70 p-3">
+                  <Info
+                    size={16}
+                    className="mt-0.5 shrink-0 text-(--primary)"
+                    aria-hidden="true"
+                  />
+                  <div className="space-y-1 text-xs font-semibold leading-5 text-(--text)">
+                    <p>
+                      On the{" "}
+                      <span className="font-extrabold text---primary)">
+                        Today&apos;s Availability Timeline
+                      </span>
+                    </p>
+
+                    <p className="pl-1">
+                      <span className="font-extrabold uppercase text-green-600">
+                        Green
+                      </span>
+                      : Your booking time
+                    </p>
+
+                    <p className="pl-1">
+                      <span className="font-extrabold uppercase text-gray-500">
+                        Grey
+                      </span>
+                      : Already booked but open to join
+                    </p>
+
+                    <p className="pl-1">
+                      <span className="font-extrabold uppercase text-(--primary)">
+                        Private Booking
+                      </span>
+                      : Not shared. Reserved just for you.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 pl-6 sm:shrink-0 sm:pl-0">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full bg-green-500"
+                      aria-hidden="true"
+                    />
+                    <span className="text-[11px] font-bold text-gray-700 sm:text-xs">
+                      Your booking time
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full bg-gray-400"
+                      aria-hidden="true"
+                    />
+                    <span className="text-[11px] font-bold text-gray-700 sm:text-xs">
+                      Already booked
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {state.errorMessage && (
               <p className="text-center text-sm font-semibold text-(--error) md:col-span-2">
                 {state.errorMessage}
@@ -331,53 +419,94 @@ export default function Booking() {
               e.preventDefault();
               goToStep(3);
             }}
-            className="space-y-4 w-[90%] md:row-span-2"
+            className="space-y-5 md:row-span-2 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
             id="bookingForm"
             autoComplete="true"
+            aria-label="Booking details"
           >
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={state.fullName}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_USER",
-                  payload: { fullName: e.target.value },
-                })
-              }
-              className="border border-gray-400 rounded p-2 w-full text-xs"
-              required
-              name="fullName"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={state.email}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_USER",
-                  payload: { email: e.target.value },
-                })
-              }
-              className="border border-gray-400 rounded p-2 w-full text-xs"
-              required
-              name="email"
-            />
-            <input
-              type="tel"
-              placeholder="Phone"
-              value={state.phone}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_USER",
-                  payload: { phone: e.target.value },
-                })
-              }
-              className="border border-gray-400 rounded p-2 w-full text-xs"
-              required
-              name="phone"
-            />
-            <div className="space-y-2">
+            {/* Contact details */}
+            <div className="space-y-3">
+              <label htmlFor="fullName" className="sr-only">
+                Full Name
+              </label>
+              <div className="relative">
+                <FaUser
+                  size={12}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  aria-hidden="true"
+                />
+                <input
+                  id="fullName"
+                  type="text"
+                  placeholder="Full Name"
+                  value={state.fullName}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_USER",
+                      payload: { fullName: e.target.value },
+                    })
+                  }
+                  className="w-full rounded-xl border border-gray-300 bg-gray-50/60 p-2.5 pl-9 text-xs transition focus:border-(--primary) focus:bg-white focus:outline-none focus:ring-2 focus:ring-(--primary)/15"
+                  required
+                  name="fullName"
+                />
+              </div>
+
+              <label htmlFor="email" className="sr-only">
+                Email
+              </label>
+              <div className="relative">
+                <FaEnvelope
+                  size={12}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  aria-hidden="true"
+                />
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="Email"
+                  value={state.email}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_USER",
+                      payload: { email: e.target.value },
+                    })
+                  }
+                  className="w-full rounded-xl border border-gray-300 bg-gray-50/60 p-2.5 pl-9 text-xs transition focus:border-(--primary) focus:bg-white focus:outline-none focus:ring-2 focus:ring-(--primary)/15"
+                  required
+                  name="email"
+                />
+              </div>
+
+              <label htmlFor="phone" className="sr-only">
+                Phone
+              </label>
+              <div className="relative">
+                <FaPhone
+                  size={12}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  aria-hidden="true"
+                />
+                <input
+                  id="phone"
+                  type="tel"
+                  placeholder="Phone"
+                  value={state.phone}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_USER",
+                      payload: { phone: e.target.value },
+                    })
+                  }
+                  className="w-full rounded-xl border border-gray-300 bg-gray-50/60 p-2.5 pl-9 text-xs transition focus:border-(--primary) focus:bg-white focus:outline-none focus:ring-2 focus:ring-(--primary)/15"
+                  required
+                  name="phone"
+                />
+              </div>
+            </div>
+
+            {/* Player / team setup */}
+            <div className="space-y-3 rounded-xl bg-gray-50/70 p-3">
               <Listbox
                 value={state.playerType}
                 onChange={(nextValue) => {
@@ -393,16 +522,36 @@ export default function Booking() {
                 }}
               >
                 <div className="relative">
-                  <ListboxButton className="flex w-full items-center justify-between rounded border border-gray-400 bg-white p-2 text-left text-xs text-(--text)">
-                    <span>
+                  <ListboxButton
+                    aria-label="Player type"
+                    className="flex w-full items-center justify-between rounded-xl border border-gray-300 bg-white p-2.5 text-left text-xs text-(--text) transition hover:border-(--primary)/50"
+                  >
+                    <span className="flex items-center gap-2">
+                      {state.playerType === "solo" ? (
+                        <FaUser
+                          size={11}
+                          className="text-(--primary)"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <FaUsers
+                          size={11}
+                          className="text-(--primary)"
+                          aria-hidden="true"
+                        />
+                      )}
                       {state.playerType === "solo"
                         ? "Solo / Individual"
                         : "Team / Group"}
                     </span>
-                    <FaChevronDown size={12} className="text-gray-400" />
+                    <FaChevronDown
+                      size={10}
+                      className="text-gray-400"
+                      aria-hidden="true"
+                    />
                   </ListboxButton>
 
-                  <ListboxOptions className="absolute z-20 mt-1 w-full overflow-auto rounded border border-gray-200 bg-white p-1 text-xs shadow-lg">
+                  <ListboxOptions className="absolute z-20 mt-1 w-full overflow-auto rounded-xl border border-gray-200 bg-white p-1 text-xs shadow-lg">
                     {[
                       { value: "solo", label: "Solo / Individual" },
                       { value: "team", label: "Team / Group" },
@@ -410,12 +559,13 @@ export default function Booking() {
                       <ListboxOption
                         key={option.value}
                         value={option.value}
-                        className="flex cursor-pointer items-center justify-between rounded px-2 py-2 hover:bg-(--primary)/10 data-selected:bg-(--primary)/10 data-selected:font-semibold"
+                        className="flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 hover:bg-(--primary)/10 data-selected:bg-(--primary)/10 data-selected:font-semibold"
                       >
                         <span>{option.label}</span>
                         <FaCheck
                           size={10}
                           className="hidden text-(--primary) data-selected:block"
+                          aria-hidden="true"
                         />
                       </ListboxOption>
                     ))}
@@ -426,7 +576,11 @@ export default function Booking() {
               {state.playerType === "team" && (
                 <>
                   <div className="flex items-center gap-2">
+                    <label htmlFor="players" className="sr-only">
+                      Number of Players
+                    </label>
                     <input
+                      id="players"
                       type="number"
                       placeholder="Number of Players"
                       value={state.players}
@@ -438,15 +592,22 @@ export default function Booking() {
                           payload: { players: e.target.value },
                         })
                       }
-                      className="flex-1 border border-gray-400 rounded p-2 w-full text-xs"
+                      className="flex-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 text-xs transition focus:border-(--primary) focus:outline-none focus:ring-2 focus:ring-(--primary)/15"
                       required
                       name="players"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600">
-                      Booking Type
+                  <div
+                    className="space-y-2"
+                    role="radiogroup"
+                    aria-labelledby="booking-type-label"
+                  >
+                    <label
+                      id="booking-type-label"
+                      className="block text-[10px] font-medium text-gray-500"
+                    >
+                      Booking type
                     </label>
 
                     <div className="flex gap-2">
@@ -456,10 +617,10 @@ export default function Booking() {
                       ].map((option) => (
                         <label
                           key={option.value}
-                          className={`flex flex-1 cursor-pointer items-center gap-2 rounded border px-2 py-2 text-[11px] font-medium transition ${
+                          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border px-2 py-2.5 text-[11px] font-medium transition-all ${
                             state.teamMode === option.value
-                              ? "border-(--primary) bg-(--primary)/5 text-(--primary)"
-                              : "border-gray-300 bg-white text-gray-700"
+                              ? "border-(--primary) bg-(--primary)/10 text-(--primary) shadow-sm"
+                              : "border-gray-300 bg-white text-gray-600 hover:border-gray-400"
                           }`}
                         >
                           <input
@@ -473,7 +634,15 @@ export default function Booking() {
                                 payload: { teamMode: option.value },
                               })
                             }
-                            className="accent-(--primary)"
+                            className="sr-only"
+                          />
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              state.teamMode === option.value
+                                ? "bg-(--primary)"
+                                : "bg-gray-300"
+                            }`}
+                            aria-hidden="true"
                           />
                           <span>{option.label}</span>
                         </label>
@@ -483,8 +652,13 @@ export default function Booking() {
                 </>
               )}
             </div>
+
+            <label htmlFor="notes" className="sr-only">
+              Notes
+            </label>
             <textarea
-              placeholder="Notes"
+              id="notes"
+              placeholder="Anything else we should know? (optional)"
               value={state.notes}
               onChange={(e) =>
                 dispatch({
@@ -492,31 +666,34 @@ export default function Booking() {
                   payload: { notes: e.target.value },
                 })
               }
-              className="border border-gray-400 rounded p-2 w-full text-xs "
+              rows={3}
+              className="w-full resize-none rounded-xl border border-gray-300 bg-gray-50/60 p-2.5 text-xs transition focus:border-(--primary) focus:bg-white focus:outline-none focus:ring-2 focus:ring-(--primary)/15"
               name="notes"
             />
+
             <PromoCodeInput
               promoCode={state.promoCode}
               discountApplied={state.discountApplied}
               subtotal={subtotal}
               dispatch={dispatch}
             />
-            <div className="flex items-center gap-2">
+
+            <div className="flex items-center gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="text-(--primary) text-xs self-start py-3 px-8 bg-transparent border border-(primary-dark) flex items-center gap-2 rounded-sm cursor-pointer"
+                className="flex items-center gap-2 self-start rounded-lg border border-(--primary-dark) bg-transparent px-6 py-3 text-xs text-(--primary) transition-colors hover:bg-gray-50"
               >
                 <ChevronLeft
                   color="var(--primary-dark)"
                   size={14}
                   aria-hidden="true"
-                />{" "}
+                />
                 Back
               </button>
               <button
                 type="submit"
-                className="bg-(--primary) text-white px-8 py-3 rounded text-xs flex items-center gap-2 cursor-pointer transition-all duration-300 ease-out hover:translate-x-1"
+                className="flex items-center gap-2 rounded-lg border border-(--primary) bg-(--primary) px-8 py-3 text-xs text-white shadow-sm transition-all duration-300 ease-out hover:translate-x-1 hover:shadow-md"
               >
                 Review Booking
                 <ChevronRight
@@ -572,6 +749,7 @@ export default function Booking() {
                 : "Not selected"}
             </span>
           </p>
+          {/* <p>Duration: {getDurationDisplay(startAt, endAt)}</p> */}
 
           <p className="text-sm font-bold">
             Duration: <span className="font-extrabold">{hoursDisplay}</span>
@@ -622,14 +800,14 @@ export default function Booking() {
               }}
               disabled={isConfirming}
               aria-busy={isConfirming}
-              className={`inline-flex min-h-[46px] min-w-[210px] items-center justify-center gap-2 self-center-safe rounded-sm border border-transparent bg-(--primary) px-8 py-3 text-xs text-(--white) transition-all duration-300 ease-out cursor-pointer
+              className={`inline-flex min-h-3 min-w-44 items-center justify-center gap-2 self-center-safe rounded-sm border border-(--primary) bg-(--primary) px-6 py-3 text-xs text-(--white) transition-all duration-300 ease-out cursor-pointer 
     ${isConfirming ? "opacity-50 cursor-not-allowed" : "hover:translate-x-1"}`}
             >
               {isConfirming ? (
-                <span className="inline-flex items-center justify-center gap-2">
+                <>
                   <SpinnerMini />
-                  <span className="sr-only">Confirming booking</span>
-                </span>
+                  <span>Confirming booking</span>
+                </>
               ) : (
                 <>
                   Confirm Booking

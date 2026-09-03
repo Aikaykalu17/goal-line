@@ -71,6 +71,7 @@ export default function VerifyIdPage() {
 
     setIsSearching(false);
     setResult(booking || "not-found");
+    setQuery("");
   }
 
   async function handleExtraTimeSave() {
@@ -148,7 +149,7 @@ export default function VerifyIdPage() {
         <button
           type="submit"
           disabled={isSearching}
-          className="flex items-center justify-center gap-2 bg-(--primary) text-white px-4 py-2 rounded text-sm disabled:opacity-60"
+          className="flex items-center justify-center gap-2 bg-(--primary) text-(--white) px-4 py-2 rounded text-xs disabled:opacity-60 cursor-pointer"
         >
           {isSearching ? (
             <>
@@ -157,7 +158,7 @@ export default function VerifyIdPage() {
             </>
           ) : (
             <>
-              <FaSearch size={12} />
+              <FaSearch size={12} aria-hidden="true" />
               <span className="text-xs">Verify ID</span>
             </>
           )}
@@ -244,7 +245,7 @@ export default function VerifyIdPage() {
                       type="button"
                       onClick={handleExtraTimeSave}
                       disabled={isUpdatingExtraTime}
-                      className="rounded bg-(--primary) px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                      className="rounded bg-(--primary) px-3 py-2 text-xs font-semibold text-white disabled:opacity-60 cursor-pointer"
                     >
                       {isUpdatingExtraTime ? "Saving..." : "Save"}
                     </button>
@@ -257,7 +258,7 @@ export default function VerifyIdPage() {
                 </div>
               ) : (
                 <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-800">
-                  Extra time editing is available only for confirmed bookings.
+                  Extra time is available only for confirmed bookings.
                 </div>
               )}
             </div>

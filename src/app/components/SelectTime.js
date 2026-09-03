@@ -45,6 +45,37 @@ function generateTimesOfDay(from, to) {
   return times;
 }
 
+function isSameCalendarDay(dateA, dateB) {
+  return (
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate()
+  );
+}
+
+function getEarliestAllowedTime(selectedDate) {
+  const now = new Date();
+  const { open, close } = getDayBounds(selectedDate);
+
+  if (!isSameCalendarDay(selectedDate, now)) {
+    return open;
+  }
+
+  const currentMinute = now.getMinutes();
+  const roundedMinutes =
+    currentMinute % INTERVAL_MINUTES === 0
+      ? currentMinute
+      : currentMinute + (INTERVAL_MINUTES - (currentMinute % INTERVAL_MINUTES));
+
+  const earliest = new Date(selectedDate);
+  earliest.setHours(now.getHours(), roundedMinutes, 0, 0);
+
+  if (earliest < open) return open;
+  if (earliest >= close) return close;
+
+  return earliest;
+}
+
 function toBusyIntervals(bookings) {
   return bookings
     .filter((booking) => {
@@ -97,8 +128,9 @@ export default function SelectTime({
 
   const { open, close } = getDayBounds(selectedDate);
   const busyIntervals = toBusyIntervals(bookings);
+  const earliestAllowedTime = getEarliestAllowedTime(selectedDate);
 
-  const startTimeSlots = generateTimesOfDay(open, close).filter(
+  const startTimeSlots = generateTimesOfDay(earliestAllowedTime, close).filter(
     (t) => !isWithinBusyInterval(t, busyIntervals) && t < close,
   );
   const startOptions = startTimeSlots.map((t) => format(t, "hh:mm a"));

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Spinner from "@/app/components/Spinner";
 import { getPricingConfigAction, savePricingAction } from "./actions";
+import SpinnerMini from "@/app/components/SpinnerMini";
+import formatNumber from "../utils/formatNumber";
+import parseNumber from "../utils/parseNumber";
 
 const DEFAULT_FIELDS = {
   weekday_day: 5000,
@@ -75,7 +78,7 @@ export default function PricingPage() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-[300px] rounded-2xl border border-gray-200 bg-white p-4">
+      <div className="w-full min-h-75 rounded-2xl border border-gray-200 bg-(--white) p-4">
         <Spinner
           label="Loading pricing"
           fullScreen={false}
@@ -101,9 +104,16 @@ export default function PricingPage() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded-lg bg-(--forest) px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+          className="rounded-lg bg-(--forest) px-4 py-2 text-xs font-semibold text-white disabled:opacity-60 cursor-pointer flex items-center gap-3"
         >
-          {saving ? "Saving..." : "Save pricing"}
+          {saving ? (
+            <>
+              <SpinnerMini />
+              Saving
+            </>
+          ) : (
+            "Save Pricing"
+          )}
         </button>
       </div>
 
@@ -120,24 +130,23 @@ export default function PricingPage() {
             <label className="block text-sm font-medium text-gray-700">
               Day rate (₦/hr)
               <input
-                type="number"
-                min="0"
+                type="text"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
-                value={form.weekday_day}
+                value={formatNumber(form.weekday_day)}
                 onChange={(event) =>
-                  updateField("weekday_day", event.target.value)
+                  updateField("weekday_day", parseNumber(event.target.value))
                 }
               />
             </label>
             <label className="block text-sm font-medium text-gray-700">
               Night rate (₦/hr)
               <input
-                type="number"
-                min="0"
+                type="text"
+                placeholder="0"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
-                value={form.weekday_night}
+                value={formatNumber(form.weekday_night)}
                 onChange={(event) =>
-                  updateField("weekday_night", event.target.value)
+                  updateField("weekday_night", parseNumber(event.target.value))
                 }
               />
             </label>
@@ -150,24 +159,24 @@ export default function PricingPage() {
             <label className="block text-sm font-medium text-gray-700">
               Day rate (₦/hr)
               <input
-                type="number"
-                min="0"
+                type="text"
+                placeholder="0"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
-                value={form.weekend_day}
+                value={formatNumber(form.weekend_day)}
                 onChange={(event) =>
-                  updateField("weekend_day", event.target.value)
+                  updateField("weekend_day", parseNumber(event.target.value))
                 }
               />
             </label>
             <label className="block text-sm font-medium text-gray-700">
               Night rate (₦/hr)
               <input
-                type="number"
-                min="0"
+                type="text"
+                placeholder="0"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
-                value={form.weekend_night}
+                value={formatNumber(form.weekend_night)}
                 onChange={(event) =>
-                  updateField("weekend_night", event.target.value)
+                  updateField("weekend_night", parseNumber(event.target.value))
                 }
               />
             </label>

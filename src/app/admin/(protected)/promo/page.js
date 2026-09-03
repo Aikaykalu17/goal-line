@@ -8,6 +8,8 @@ import {
   togglePromoCodeAction,
   upsertPromoCodeAction,
 } from "./actions";
+import formatStatusLabel from "../utils/formatLabelStatus";
+import SpinnerMini from "@/app/components/SpinnerMini";
 
 const EMPTY_FORM = {
   code: "",
@@ -33,6 +35,7 @@ export default function PromoPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
     if (!message) return;
@@ -61,6 +64,7 @@ export default function PromoPage() {
     async function fetchPromos() {
       try {
         const data = await getPromoCodesAction();
+
         if (!ignore) {
           setRows(data || []);
         }
@@ -84,11 +88,12 @@ export default function PromoPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-
+    setFetching(true);
     try {
       await upsertPromoCodeAction(form);
       setMessage("Promo code updated.");
       setForm(EMPTY_FORM);
+      setFetching(false);
       await loadPromos();
     } catch (error) {
       setMessage(error?.message || "Could not save promo code.");
@@ -147,7 +152,7 @@ export default function PromoPage() {
       </p>
 
       {message && (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
           {message}
         </div>
       )}
@@ -157,20 +162,20 @@ export default function PromoPage() {
         className="mt-6 rounded-2xl border border-gray-200 bg-white p-5"
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-xs font-medium text-gray-700">
             Code
             <input
               value={form.code}
               onChange={(event) =>
                 setForm((current) => ({ ...current, code: event.target.value }))
               }
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm uppercase"
-              placeholder="FREEDAY"
+              placeholder="Aikay17"
+              className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs"
               required
             />
           </label>
 
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-xs font-medium text-gray-700">
             Discount Percentage
             <input
               type="number"
@@ -187,7 +192,7 @@ export default function PromoPage() {
             />
           </label>
 
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-xs font-medium text-gray-700">
             Expiry date
             <input
               type="date"
@@ -198,11 +203,11 @@ export default function PromoPage() {
                   expires_at: event.target.value,
                 }))
               }
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs"
             />
           </label>
 
-          <label className="flex items-center gap-2 pt-8 text-sm font-medium text-gray-700">
+          <label className="flex items-center gap-2 pt-8 text-xs font-medium text-gray-700">
             <input
               type="checkbox"
               checked={form.active}
@@ -220,9 +225,9 @@ export default function PromoPage() {
         <div className="mt-5 flex justify-end">
           <button
             type="submit"
-            className="rounded-lg bg-(--forest) px-4 py-2 text-xs font-semibold text-white cursor-pointer"
+            className="rounded-lg bg-(--forest) w-32 h-8 px-4 py-2 text-xs font-semibold text-white cursor-pointer flex items-center justify-center"
           >
-            Save promo code
+            {fetching ? <SpinnerMini /> : "Save promo code"}
           </button>
         </div>
       </form>
@@ -242,7 +247,7 @@ export default function PromoPage() {
             <tbody>
               {enrichedRows.length === 0 && (
                 <tr>
-                  <td className="p-4 text-gray-400" colSpan={5}>
+                  <td className="p-4 text-gray-400 text-xs" colSpan={5}>
                     No promo codes yet.
                   </td>
                 </tr>
@@ -250,15 +255,15 @@ export default function PromoPage() {
 
               {enrichedRows.map((row) => (
                 <tr key={row.code} className="border-t border-gray-200">
-                  <td className="p-3 font-semibold text-slate-800">
+                  <td className="p-3 font-semibold text-slate-800 text-xs">
                     {row.code}
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 text-xs">
                     {Number.isFinite(Number(row.discount_percent))
                       ? `${Number(row.discount_percent)}%`
                       : "0%"}
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 text-xs">
                     {row.expires_at
                       ? new Date(row.expires_at).toLocaleDateString()
                       : "Never"}
@@ -267,7 +272,7 @@ export default function PromoPage() {
                     <span
                       className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusBadge(row.status)}`}
                     >
-                      {row.status}
+                      {formatStatusLabel(row.status)}
                     </span>
                   </td>
                   <td className="p-3">
@@ -275,14 +280,14 @@ export default function PromoPage() {
                       <button
                         type="button"
                         onClick={() => handleToggle(row.code, row.active)}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                        className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 cursor-pointer"
                       >
                         {row.active ? "Disable" : "Enable"}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(row.code)}
-                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-700"
+                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-700 cursor-pointer"
                       >
                         Delete
                       </button>

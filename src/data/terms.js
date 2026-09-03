@@ -27,7 +27,7 @@ const terms = [
     id: 5,
     title: "Liability",
     description:
-      "GoalLne Turf is not liable for any injury, loss, or damage during your use of the facility.",
+      "GoalLine Turf is not liable for any injury, loss, or damage during your use of the facility.",
   },
   {
     id: 6,

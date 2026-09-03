@@ -2,6 +2,10 @@
 
 import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
 import {
+  sendBookingEmails,
+  sendPendingBookingReminderEmail,
+} from "@/lib/email";
+import {
   DEFAULT_PRICING,
   calculatePromoDiscount,
   getRateForDate,
@@ -45,7 +49,7 @@ export async function validatePromoCodeAction(code, subtotal = 0) {
     return {
       valid: false,
       discount: 0,
-      reason: "Invalid or expired promo code",
+      reason: "Invalid or expired promo code!",
     };
   }
 
@@ -53,7 +57,7 @@ export async function validatePromoCodeAction(code, subtotal = 0) {
     return {
       valid: false,
       discount: 0,
-      reason: "This promo code is currently inactive.",
+      reason: "This promo code is currently inactive!",
     };
   }
 
@@ -62,7 +66,7 @@ export async function validatePromoCodeAction(code, subtotal = 0) {
     return {
       valid: false,
       discount: 0,
-      reason: "This promo code has expired.",
+      reason: "This promo code has expired!",
     };
   }
 
@@ -238,6 +242,23 @@ export async function createBookingAction({
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  try {
+    await sendBookingEmails({
+      booking: data,
+      customerEmail: user_email.trim(),
+      customerName: user_full_name.trim(),
+      customerPhone: user_phone.trim(),
+    });
+
+    await sendPendingBookingReminderEmail({
+      booking: data,
+      customerEmail: user_email.trim(),
+      customerName: user_full_name.trim(),
+    });
+  } catch (emailError) {
+    console.error("Booking created, but email dispatch failed:", emailError);
   }
 
   return { success: true, booking: data };

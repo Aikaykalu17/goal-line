@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Spinner from "@/app/components/Spinner";
+import SpinnerMini from "@/app/components/SpinnerMini";
 
 const DEFAULT_AVATAR =
   "https://ui-avatars.com/api/?name=Admin&background=0d7a5f&color=fff&size=256";
@@ -13,6 +15,17 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+
+  useEffect(() => {
+    if (!message) return;
+
+    const timer = setTimeout(() => {
+      setMessage("");
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [message]);
 
   useEffect(() => {
     let active = true;
@@ -38,6 +51,7 @@ export default function SettingsPage() {
         setAvatarUrl(nextAvatar);
       } catch (error) {
         setMessage(error?.message || "Could not load admin profile.");
+        setMessageType("error");
       } finally {
         if (active) {
           setLoading(false);
@@ -73,6 +87,7 @@ export default function SettingsPage() {
   async function handleUpload() {
     if (!selectedFile || !user?.id) {
       setMessage("Choose a profile photo first.");
+      setMessageType("error");
       return;
     }
 
@@ -85,7 +100,7 @@ export default function SettingsPage() {
       }
 
       const fileExt = selectedFile.name.split(".").pop() || "png";
-      const filePath = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
@@ -123,8 +138,10 @@ export default function SettingsPage() {
       setAvatarUrl(publicUrl);
       setSelectedFile(null);
       setMessage("Profile picture updated successfully.");
+      setMessageType("error");
     } catch (error) {
       setMessage(error?.message || "Could not update profile picture.");
+      setMessageType("error");
     } finally {
       setSaving(false);
     }
@@ -136,19 +153,31 @@ export default function SettingsPage() {
         <h1 className="text-xl font-bold text-(--text) md:text-2xl">
           Settings
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-xs text-gray-500">
           Update your admin profile picture.
         </p>
       </div>
 
       {message && (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div
+          className={`mt-4 rounded-xl border px-3 py-2 text-xs ${
+            messageType === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+        >
           {message}
         </div>
       )}
 
       {loading ? (
-        <div className="mt-6 text-sm text-gray-500">Loading profile...</div>
+        <div className="w-full min-h-75 rounded-2xl border border-gray-200 bg-white p-4">
+          <Spinner
+            label="Loading settings"
+            fullScreen={false}
+            variant="inner-page"
+          />
+        </div>
       ) : (
         <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
           <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
@@ -161,15 +190,15 @@ export default function SettingsPage() {
             </div>
 
             <div className="flex-1">
-              <p className="text-lg font-bold text-slate-900">{displayName}</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm font-bold text-slate-900">{displayName}</p>
+              <p className="text-xs text-gray-500">
                 {user?.email || "admin@goolline.com"}
               </p>
             </div>
           </div>
 
           <div className="mt-6 max-w-md space-y-4">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs font-medium text-gray-700">
               Choose profile photo
               <input
                 type="file"
@@ -177,7 +206,7 @@ export default function SettingsPage() {
                 onChange={(event) =>
                   setSelectedFile(event.target.files?.[0] || null)
                 }
-                className="mt-2 block w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-(--forest) file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white"
+                className="mt-2 block w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 file:mr-3 file:rounded-md file:border-0 file:bg-(--forest) file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white text-xs"
               />
             </label>
 
@@ -185,9 +214,16 @@ export default function SettingsPage() {
               type="button"
               onClick={handleUpload}
               disabled={!selectedFile || saving}
-              className="w-full rounded-xl bg-(--forest) px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl bg-(--forest) px-4 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer flex items-center text-center justify-center gap-4"
             >
-              {saving ? "Uploading..." : "Save profile picture"}
+              {saving ? (
+                <>
+                  <SpinnerMini />
+                  Uploading...
+                </>
+              ) : (
+                "Save profile picture"
+              )}
             </button>
           </div>
         </div>

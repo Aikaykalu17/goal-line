@@ -6,23 +6,38 @@ import { FaArrowRight } from "react-icons/fa";
 
 function Hamburger({ isOpen, onClose, navItems }) {
   return (
-    <nav
+    <div
       id="mobile-menu"
-      aria-label="Main navigation"
       aria-hidden={!isOpen}
-      className="mt-8 flex flex-col gap-4 w-[90%] mx-auto h-[90%]"
+      className={`fixed inset-0 top-18 z-40 transition-all duration-300 ${
+        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
     >
-      <HamburgerList navItems={navItems} onClose={onClose} />
+      {/* Backdrop blur */}
+      <div className="absolute inset-0 bg-(--bg)/80 backdrop-blur-md" />
 
-      <Link
-        href="/booking"
-        onClick={() => dispatch({ type: "RESET" })}
-        className="px-12 py-4 bg-(--white) text-(--primary) rounded-sm text-center w-max self-center text-xs flex items-center gap-4"
-      >
-        Book Now{" "}
-        <FaArrowRight color="var(--forest)" aria-hidden="true" size={14} />
-      </Link>
-    </nav>
+      <div className="relative h-[calc(100dvh-72px)] flex flex-col px-6 pt-6 pb-4">
+        {/* Scrollable list */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden -mx-6 px-6 pb-4">
+          <HamburgerList navItems={navItems} onClose={onClose} />
+        </div>
+
+        {/* Sticky CTA */}
+        <div className="pt-4 border-t border-(--white)/10">
+          <Link
+            href="/booking"
+            onClick={onClose}
+            className="group w-full flex items-center justify-center gap-3 px-6 py-4 bg-(--primary) text-white rounded-2xl text-base font-bold shadow-lg hover:shadow-(--primary)/30 transition-all duration-300 active:scale-95"
+          >
+            Book Now
+            <FaArrowRight
+              size={16}
+              className="transition-transform duration-300 group-hover:translate-x-1"
+            />
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
 

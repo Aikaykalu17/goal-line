@@ -10,10 +10,10 @@ export default function Spinner({
     <div
       className={
         isFullScreen
-          ? "flex min-h-screen w-full items-center justify-center bg-[#f3f4f3]"
+          ? "fixed inset-0 z-100 flex h-dvh w-full items-center justify-center overflow-hidden bg-[#f3f4f3]"
           : isInnerPage
-            ? "flex w-full min-h-[220px] items-center justify-center rounded-2xl border border-gray-200 bg-white/80 py-8"
-            : "flex w-full min-h-[180px] items-center justify-center rounded-xl bg-[#f3f4f3]/60 py-6"
+            ? "flex w-full min-h-55 items-center justify-center rounded-2xl border border-gray-200 bg-white/80 py-8"
+            : "flex w-full min-h-45 items-center justify-center rounded-xl bg-[#f3f4f3]/60 py-6"
       }
     >
       <div className="flex flex-col items-center gap-4">
@@ -36,8 +36,8 @@ export default function Spinner({
           <div
             className={
               isFullScreen
-                ? "absolute inset-1 rounded-full border-4 border-transparent border-t-[var(--forest)] border-r-[#67c5a4] animate-spin"
-                : "absolute inset-1 rounded-full border-3 border-transparent border-t-[var(--forest)] border-r-[#67c5a4] animate-spin"
+                ? "absolute inset-1 rounded-full border-4 border-transparent border-t-(--forest) border-r-[#67c5a4] animate-spin"
+                : "absolute inset-1 rounded-full border-3 border-transparent border-t-(--forest) border-r-[#67c5a4] animate-spin"
             }
           />
           <div
@@ -50,8 +50,8 @@ export default function Spinner({
           <div
             className={
               isFullScreen
-                ? "absolute inset-7 rounded-full bg-[var(--forest)] opacity-90"
-                : "absolute inset-5 rounded-full bg-[var(--forest)] opacity-90"
+                ? "absolute inset-7 rounded-full bg-var(--forest) opacity-90"
+                : "absolute inset-5 rounded-full bg-var(--forest) opacity-90"
             }
           />
         </div>
@@ -60,8 +60,8 @@ export default function Spinner({
           <span
             className={
               isFullScreen
-                ? "h-2.5 w-2.5 rounded-full bg-[var(--forest)] animate-bounce [animation-delay:-0.2s]"
-                : "h-2 w-2 rounded-full bg-[var(--forest)] animate-bounce [animation-delay:-0.2s]"
+                ? "h-2.5 w-2.5 rounded-full bg-var(--forest) animate-bounce [animation-delay:-0.2s]"
+                : "h-2 w-2 rounded-full bg-var(--forest) animate-bounce [animation-delay:-0.2s]"
             }
           />
           <span

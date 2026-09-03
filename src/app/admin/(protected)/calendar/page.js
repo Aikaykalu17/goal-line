@@ -22,7 +22,9 @@ import {
   createBlockedDateAction,
   getBlockedDatesAction,
   getMonthBookingsAction,
+  unblockDateAction,
 } from "./actions";
+import formatStatusLabel from "../utils/formatLabelStatus";
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -134,6 +136,7 @@ export default function CalendarPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [unblockingId, setUnblockingId] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -228,6 +231,19 @@ export default function CalendarPage() {
       : "maintenance";
     const labelDate = date ? format(date, "MMM d, yyyy") : "This date";
     return `${labelDate} is blocked because of ${reason}.`;
+  }
+
+  async function handleUnblock(id) {
+    setUnblockingId(id);
+
+    try {
+      await unblockDateAction(id);
+      setReloadTrigger((n) => n + 1);
+    } catch (err) {
+      console.error("Error unblocking date:", err);
+    } finally {
+      setUnblockingId(null);
+    }
   }
 
   const upcomingBlocked = [...blockedDates].sort(
@@ -327,7 +343,7 @@ export default function CalendarPage() {
                         STATUS_STYLES[b.status] || "bg-gray-100 text-gray-700"
                       }`}
                     >
-                      {b.status}
+                      {formatStatusLabel(b.status)}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
@@ -367,9 +383,9 @@ export default function CalendarPage() {
               return (
                 <div
                   key={b.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm"
+                  className="flex flex-col gap-3 rounded-lg border border-gray-100 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium text-(--text)">
                       {sameDay
                         ? format(new Date(b.start_at), "MMMM d, yyyy")
@@ -381,7 +397,17 @@ export default function CalendarPage() {
                       </p>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400">All Day</span>
+                  <div className="flex items-center justify-between gap-3 sm:shrink-0">
+                    <span className="text-xs text-gray-400">All Day</span>
+                    <button
+                      type="button"
+                      onClick={() => handleUnblock(b.id)}
+                      disabled={unblockingId === b.id}
+                      className="rounded border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {unblockingId === b.id ? "Unblocking..." : "Unblock"}
+                    </button>
+                  </div>
                 </div>
               );
             })}

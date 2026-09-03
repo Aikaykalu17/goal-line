@@ -134,7 +134,7 @@ export default function ReportsPage() {
               type="date"
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm xl:min-w-[150px]"
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm The class xl:min-w-37.5"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
@@ -143,13 +143,13 @@ export default function ReportsPage() {
               type="date"
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm xl:min-w-[150px]"
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm The class xl:min-w-37.5"
             />
           </label>
           <button
             type="button"
             onClick={loadReport}
-            className="h-[42px] w-full rounded-xl bg-(--forest) px-4 py-2 text-sm font-semibold text-white sm:w-auto xl:self-end"
+            className="cursor-pointer h-10.5 w-full rounded-xl bg-(--forest) px-4 py-2 text-sm font-semibold text-white sm:w-auto xl:self-end"
           >
             Refresh
           </button>
@@ -157,7 +157,7 @@ export default function ReportsPage() {
             type="button"
             onClick={exportCsv}
             disabled={!report?.bookings?.length}
-            className="h-10.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto xl:self-end"
+            className="cursor-pointer h-10.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto xl:self-end"
           >
             Export CSV
           </button>
@@ -171,7 +171,7 @@ export default function ReportsPage() {
       )}
 
       {loading ? (
-        <div className="mt-6 w-full min-h-[300px] rounded-2xl border border-gray-200 bg-white p-4">
+        <div className="mt-6 w-full min-h-75 rounded-2xl border border-gray-200 bg-white p-4">
           <Spinner
             label="Loading report"
             fullScreen={false}

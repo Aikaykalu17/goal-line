@@ -1,16 +1,18 @@
 "use client";
 import SpinnerMini from "./SpinnerMini";
-
-import { Check, CheckCircle } from "lucide-react";
+import {
+  CheckCircle,
+  User,
+  Phone,
+  Mail,
+  Tag,
+  MessageSquare,
+} from "lucide-react";
 import { FaTelegramPlane } from "react-icons/fa";
 import { useState } from "react";
-import faqs from "@/data/faqs";
-import FaqList from "./FaqList";
-import Reveal from "./Reveal";
 
 function RegistrationForm() {
   const [status, setStatus] = useState("idle");
-
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [subject, setSubject] = useState("");
@@ -22,182 +24,240 @@ function RegistrationForm() {
   const isFormValid =
     fullName.trim() !== "" &&
     phoneNumber.trim() !== "" &&
-    subject !== "" &&
-    message !== "" &&
+    subject.trim() !== "" &&
+    message.trim() !== "" &&
     email.trim() !== "";
 
   async function handleSubmit(e) {
     e.preventDefault();
-
     setStatus("sending");
     const formData = new FormData(e.target);
 
     const data = {
       fullName: formData.get("fullName"),
-      dob: formData.get("dob"),
-      position: formData.get("position"),
       phoneNumber: formData.get("phoneNumber"),
-      state: formData.get("state"),
       email: formData.get("email"),
+      subject: formData.get("subject"),
       message: formData.get("message"),
     };
-    console.log(data);
 
     try {
       const response = await fetch("/api/registration", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error("Something went wrong");
-      }
+      if (!response.ok) throw new Error("Something went wrong");
       setStatus("success");
       e.target.reset();
-
-      setTimeout(() => {
-        setStatus("idle");
-      }, 8000);
+      setFullName("");
+      setPhoneNumber("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+      setTimeout(() => setStatus("idle"), 8000);
     } catch (error) {
       console.error(error);
       setStatus("error");
     }
   }
+
   return (
-    <div className="w-full bg-white ">
-      <div className="py-8 flex flex-col gap-6  items-start rounded-l-sm rounded-r-sm  md:flex md:flex-col landscape:grid landscape:grid-cols-2">
-        <Reveal>
-          <form
-            aria-labelledby="form-title"
-            className="flex flex-col gap-4 pb-4 flex-1 border border-gray-500 p-4 rounded"
-            onSubmit={handleSubmit}
+    <form
+      aria-labelledby="form-title"
+      className="flex flex-col gap-5 rounded-2xl border border-(--border)/50  p-4 shadow-lg sm:p-6"
+      onSubmit={handleSubmit}
+    >
+      <div>
+        <h2
+          id="form-title"
+          className="text-(--text) font-extrabold text-xl tracking-tight"
+        >
+          Send us a message
+        </h2>
+        <p className="mt-1 text-sm text-(--muted)">
+          Fill in your details and we&apos;ll get back to you soon.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="fullName"
+            className="text-sm font-semibold text-(--text)"
           >
-            <h2
-              id="form-title"
-              className="text-(--primary-dark) text-center font-extrabold text-lg"
-            >
-              Send us a message!
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-xs flex flex-col gap-0.5">
-                <label htmlFor="fullName">Full Name</label>
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  required
-                  placeholder="Enter your full name"
-                  className="border border-slate-400 rounded py-2 px-4 text-xs outline-none"
-                  disabled={isDisabled}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
+            Full Name
+          </label>
+          <div className="relative">
+            <User
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              aria-hidden="true"
+            />
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              required
+              placeholder="Enter your full name"
+              value={fullName}
+              className="w-full border border-(--border)/60 rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none transition-colors bg-gray-50/60 focus:border-(--primary) focus:bg-white focus:ring-2 focus:ring-(--primary)/15 disabled:opacity-60"
+              disabled={isDisabled}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
+        </div>
 
-              <div className="text-xs flex flex-col gap-0.5">
-                <label htmlFor="phoneNumber">Phone Number</label>
-                <input
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  required
-                  placeholder="Phone number"
-                  className="border border-slate-400 rounded py-2 px-4 text-xs focus:outline-none"
-                  disabled={isDisabled}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className=" gap-3">
-              <div className="text-xs flex flex-col gap-0.5">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="Email Address"
-                  className="border border-slate-400 rounded py-2 px-4 text-xs outline-none"
-                  disabled={isDisabled}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="text-xs flex flex-col gap-0.5">
-              <label htmlFor="subject">Subject</label>
-              <input
-                id="subject"
-                name="subject"
-                required
-                placeholder="How can we help you?"
-                className="border border-slate-400 rounded py-2 px-4 text-xs outline-none"
-                disabled={isDisabled}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-            </div>
-            <div className="text-xs flex flex-col gap-0.5">
-              <label htmlFor="message">Message</label>
-              <textarea
-                id="message"
-                name="message"
-                placeholder="Type your message here."
-                className="border border-slate-400 rounded py-2 px-4 text-xs w-full h-32 resize-none overflow-y-auto outline-none"
-                disabled={isDisabled}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-            </div>
-            {isFormValid && (
-              <button
-                type="submit"
-                disabled={isDisabled || status === "sending"}
-                className="bg-(--primary) text-xs text-(--white) font-semibold py-4 px-20 rounded-md self-center disabled:opacity-50 flex items-center justify-center gap-2 transition-all duration-300 ease-out hover:translate-x-1 cursor-pointer border"
-              >
-                {status === "sending" && <SpinnerMini />}
-                {status === "success" && (
-                  <CheckCircle
-                    size={30}
-                    color="var(--white)"
-                    className="animate-bounce"
-                  />
-                )}
-                {status !== "sending" && status !== "success" && (
-                  <>
-                    Send a Message
-                    <FaTelegramPlane size={16} />
-                  </>
-                )}
-              </button>
-            )}
-            <div aria-live="polite">
-              {status === "success" && (
-                <p role="status" className="text-green-600 text-xs text-center">
-                  Message received! We&apos;ll reach out via the email you
-                  provided for other informaion and arrangements. Please avoid
-                  submitting multiple messages.
-                </p>
-              )}
-              {status === "error" && (
-                <p role="alert" className="text-red-600 text-xs text-center">
-                  Something went wrong. Please try again.
-                </p>
-              )}
-            </div>
-          </form>
-        </Reveal>
-
-        <div className="flex flex-col w-full gap-8 md:flex-1">
-          <Reveal>
-            <div className="flex flex-col gap-4">
-              <h2 className="text-(--primary-dark) font-extrabold">FAQS</h2>
-              <FaqList faqs={faqs} />
-            </div>
-          </Reveal>
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="phoneNumber"
+            className="text-sm font-semibold text-(--text)"
+          >
+            Phone Number
+          </label>
+          <div className="relative">
+            <Phone
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              aria-hidden="true"
+            />
+            <input
+              id="phoneNumber"
+              name="phoneNumber"
+              type="tel"
+              required
+              placeholder="+234 800 000 0000"
+              value={phoneNumber}
+              className="w-full border border-(--border)/60 rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none transition-colors bg-gray-50/60 focus:border-(--primary) focus:bg-white focus:ring-2 focus:ring-(--primary)/15 disabled:opacity-60"
+              disabled={isDisabled}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+            />
+          </div>
         </div>
       </div>
-    </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="email" className="text-sm font-semibold text-(--text)">
+          Email Address
+        </label>
+        <div className="relative">
+          <Mail
+            size={16}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            aria-hidden="true"
+          />
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="you@example.com"
+            value={email}
+            className="w-full border border-(--border)/60 rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none transition-colors bg-gray-50/60 focus:border-(--primary) focus:bg-white focus:ring-2 focus:ring-(--primary)/15 disabled:opacity-60"
+            disabled={isDisabled}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor="subject"
+          className="text-sm font-semibold text-(--text)"
+        >
+          Subject
+        </label>
+        <div className="relative">
+          <Tag
+            size={16}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            aria-hidden="true"
+          />
+          <input
+            id="subject"
+            name="subject"
+            required
+            placeholder="How can we help you?"
+            value={subject}
+            className="w-full border border-(--border)/60 rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none transition-colors bg-gray-50/60 focus:border-(--primary) focus:bg-white focus:ring-2 focus:ring-(--primary)/15 disabled:opacity-60"
+            disabled={isDisabled}
+            onChange={(e) => setSubject(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor="message"
+          className="text-sm font-semibold text-(--text)"
+        >
+          Message
+        </label>
+        <div className="relative">
+          <MessageSquare
+            size={16}
+            className="pointer-events-none absolute left-3.5 top-3.5 text-gray-400"
+            aria-hidden="true"
+          />
+          <textarea
+            id="message"
+            name="message"
+            required
+            placeholder="Type your message here."
+            value={message}
+            className="w-full border border-(--border)/60 rounded-xl py-3 pl-10 pr-4 text-sm h-36 resize-none outline-none transition-colors bg-gray-50/60 focus:border-(--primary) focus:bg-white focus:ring-2 focus:ring-(--primary)/15 disabled:opacity-60"
+            disabled={isDisabled}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isDisabled || status === "sending"}
+        className="bg-(--primary) text-white text-sm font-bold py-3 px-8 rounded-xl self-start disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+      >
+        {status === "sending" && <SpinnerMini />}
+        {status === "success" && (
+          <CheckCircle
+            size={20}
+            className="animate-bounce"
+            aria-hidden="true"
+          />
+        )}
+        {status !== "sending" && status !== "success" && (
+          <>
+            Send Message <FaTelegramPlane size={16} />
+          </>
+        )}
+      </button>
+
+      <div aria-live="polite" className="text-sm">
+        {status === "success" && (
+          <p
+            role="status"
+            className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 font-medium text-green-700"
+          >
+            <CheckCircle
+              size={16}
+              className="mt-0.5 shrink-0"
+              aria-hidden="true"
+            />
+            Message received! We&apos;ll reach out via the email you provided.
+            Please avoid submitting multiple messages.
+          </p>
+        )}
+        {status === "error" && (
+          <p
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-medium text-red-600"
+          >
+            Something went wrong. Please try again.
+          </p>
+        )}
+      </div>
+    </form>
   );
 }
 

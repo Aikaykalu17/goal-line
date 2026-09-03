@@ -7,24 +7,9 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { FaCheckCircle, FaHome, FaRegCopy, FaCheck } from "react-icons/fa";
 
+import getDurationDisplay from "@/utils/durationDisplay";
+
 import formatCurrency from "@/utils/formatCurrency";
-
-function getDurationDisplay(startAt, endAt) {
-  const ms = new Date(endAt) - new Date(startAt);
-  const totalMinutes = Math.round(ms / (1000 * 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours && minutes) {
-    return `${hours} hr${hours > 1 ? "s" : ""} ${minutes} min${minutes > 1 ? "s" : ""}`;
-  }
-
-  if (hours) {
-    return `${hours} hr${hours > 1 ? "s" : ""}`;
-  }
-
-  return `${minutes} min${minutes > 1 ? "s" : ""}`;
-}
 
 export default function BookingConfirmation({ booking, bookingId }) {
   const confirmationRef = useRef(null);
@@ -39,24 +24,16 @@ export default function BookingConfirmation({ booking, bookingId }) {
   const ticketWidthPx = 400;
   const ticketHeightPx = 200 * 3.7795275591;
   const innerTicketWidth = 385;
-  const compactLabelStyle = {
-    fontSize: "0.66rem",
-    lineHeight: 1.25,
-    letterSpacing: "-0.02em",
-    margin: 0,
-    width: "100%",
-  };
 
   async function downloadAsImage() {
     if (!confirmationRef.current) return;
+    const { scrollWidth, scrollHeight } = confirmationRef.current;
     const canvas = await html2canvas(confirmationRef.current, {
       backgroundColor: "#ffffff",
       scale: 2,
       useCORS: true,
-      width: ticketWidthPx,
-      height: ticketHeightPx,
-      windowWidth: ticketWidthPx,
-      windowHeight: ticketHeightPx,
+      width: scrollWidth,
+      height: scrollHeight,
     });
     const link = document.createElement("a");
     link.download = `booking-${bookingId}.png`;
@@ -66,14 +43,13 @@ export default function BookingConfirmation({ booking, bookingId }) {
 
   async function downloadAsPDF() {
     if (!confirmationRef.current) return;
+    const { scrollWidth, scrollHeight } = confirmationRef.current;
     const canvas = await html2canvas(confirmationRef.current, {
       backgroundColor: "#ffffff",
       scale: 2,
       useCORS: true,
-      width: ticketWidthPx,
-      height: ticketHeightPx,
-      windowWidth: ticketWidthPx,
-      windowHeight: ticketHeightPx,
+      width: scrollWidth,
+      height: scrollHeight,
     });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({
@@ -98,6 +74,7 @@ export default function BookingConfirmation({ booking, bookingId }) {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
+        alignItems: "center",
       }}
     >
       <div
@@ -105,15 +82,17 @@ export default function BookingConfirmation({ booking, bookingId }) {
         className="flex flex-col items-center"
         style={{
           backgroundColor: "#ffffff",
-          width: "100%",
+          width: `${innerTicketWidth}px`,
           maxWidth: `${innerTicketWidth}px`,
-          minHeight: `${ticketHeightPx - 40}px`,
-          padding: "0.375rem 0.375rem 0",
+          height: "auto",
+          padding: "0.375rem 1rem 2rem 1rem",
           boxSizing: "border-box",
           overflow: "visible",
+          textAlign: "center",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
         <div
@@ -122,6 +101,7 @@ export default function BookingConfirmation({ booking, bookingId }) {
             justifyContent: "center",
             marginTop: "6px",
             marginBottom: "8px",
+            alignItems: "center",
           }}
         >
           <FaCheckCircle color="#008a4c" size={54} aria-hidden="true" />
@@ -203,6 +183,7 @@ export default function BookingConfirmation({ booking, bookingId }) {
             display: "flex",
             flexDirection: "column",
             gap: "8px",
+            textAlign: "center",
           }}
         >
           <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
@@ -257,7 +238,9 @@ export default function BookingConfirmation({ booking, bookingId }) {
           </p>
           <p className="text-sm font-bold" style={{ width: "100%", margin: 0 }}>
             Discount Applied:{" "}
-            <span className="font-extrabold">₦{booking.discount}</span>
+            <span className="font-extrabold">
+              ₦{formatCurrency(booking.discount)}
+            </span>
           </p>
         </div>
 

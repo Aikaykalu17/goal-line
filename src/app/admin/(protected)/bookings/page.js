@@ -8,8 +8,10 @@ import {
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabaseClient";
-import formatCurrency from "@/utils/formatCurrency";
 import Spinner from "@/app/components/Spinner";
+
+import formatStatusLabel from "../utils/formatLabelStatus";
+import formatCurrency from "@/utils/formatCurrency";
 
 const TABS = ["All", "Pending", "Confirmed", "Cancelled", "Expired"];
 const PAGE_SIZE = 10;
@@ -41,21 +43,21 @@ function getBookingStatus(booking) {
   return status || "pending";
 }
 
-const formatStatusLabel = (status) => {
-  const normalized = String(status || "")
-    .trim()
-    .toLowerCase();
-  if (!normalized) return "Pending";
+// const formatStatusLabel = (status) => {
+//   const normalized = String(status || "")
+//     .trim()
+//     .toLowerCase();
+//   if (!normalized) return "Pending";
 
-  if (normalized === "expired") return "Expired Booking";
+//   if (normalized === "expired") return "Expired Booking";
 
-  const formatted = normalized
-    .split(" ")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+//   const formatted = normalized
+//     .split(" ")
+//     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+//     .join(" ");
 
-  return formatted;
-};
+//   return formatted;
+// };
 
 export default function BookingsPage() {
   const [activeTab, setActiveTab] = useState("All");
@@ -108,7 +110,7 @@ export default function BookingsPage() {
           .sort((a, b) => {
             const timeA = new Date(a.start_at || 0).getTime();
             const timeB = new Date(b.start_at || 0).getTime();
-            return timeA - timeB;
+            return timeB - timeA;
           });
 
         const visibleBookings =
@@ -171,7 +173,6 @@ export default function BookingsPage() {
     } catch (err) {
       alert("Could not update booking: " + err.message);
     }
-
     setActioningId(null);
   }
   if (isLoading && bookings.length === 0) {
@@ -187,10 +188,10 @@ export default function BookingsPage() {
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`border-b-2 px-3 py-2 text-sm font-bold ${
+            className={`border-b-2 px-3 py-2 text-sm font-bold cursor-pointer ${
               activeTab === tab
-                ? "border-(--primary) text-(--primary)"
-                : "border-transparent text-gray-500 hover:text-(--text)"
+                ? "border-(--primary) text-(--primary) cursor-pointer"
+                : "border-transparent text-gray-500 hover:text-(--text) cursor-pointer"
             }`}
           >
             {tab}
@@ -381,7 +382,7 @@ export default function BookingsPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40"
+              className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 cursor-pointer"
             >
               Prev
             </button>
@@ -391,7 +392,7 @@ export default function BookingsPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40"
+              className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 cursor-pointer"
             >
               Next
             </button>

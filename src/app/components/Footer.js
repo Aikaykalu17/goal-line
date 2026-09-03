@@ -1,180 +1,150 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FaFacebook, FaWhatsapp, FaInstagram } from "react-icons/fa";
+import {
+  FaFacebook,
+  FaWhatsapp,
+  FaInstagram,
+  FaMapMarkerAlt,
+  FaClock,
+} from "react-icons/fa";
 
 function Footer() {
   const year = new Date().getFullYear();
 
+  const footerLinks = {
+    explore: [
+      { name: "Home", href: "/" },
+      { name: "About", href: "/about" },
+      { name: "How It Works", href: "/how-it-works" },
+      { name: "Contact", href: "/contact" },
+    ],
+    support: [
+      { name: "FAQs", href: "/contact" },
+      { name: "Booking Policy", href: "/booking-policy" },
+      { name: "Terms & Conditions", href: "/terms" },
+      { name: "Privacy Policy", href: "/privacy" },
+    ],
+  };
+
+  const socials = [
+    { name: "Facebook", href: "https://www.facebook.com", icon: FaFacebook },
+    { name: "WhatsApp", href: "https://wa.me/2348101375140", icon: FaWhatsapp },
+    { name: "Instagram", href: "https://www.instagram.com", icon: FaInstagram },
+  ];
+
   return (
-    <footer className="w-full bg-(--forest) flex flex-col">
-      <div className="w-[90%] mx-auto flex flex-col gap-8 py-8 md:flex md:flex-row md:justify-between">
-        <div className="flex flex-col gap-4">
-          <Image
-            src="/whiteLogo.webp"
-            alt="GoalLine Turf"
-            width={150}
-            height={300}
-            priority
-            loading="eager"
-            sizes="(max-width: 768px) 100px, 120px"
-            style={{ objectFit: "contain" }}
-          />
+    <footer className="w-full bg-(--forest)">
+      <div className="w-[90%] max-w-7xl mx-auto py-12 lg:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+          {/* Brand */}
+          <div className="flex flex-col gap-4 lg:col-span-1">
+            <Link href="/" className="w-fit">
+              <Image
+                src="/whiteLogo.webp"
+                alt="GoalLine Turf"
+                width={140}
+                height={40}
+                priority
+                className="object-contain"
+              />
+            </Link>
+            <p className="text-white/80 text-sm leading-relaxed">
+              The best place to play. <br />
+              Book your slot and enjoy the beautiful game.
+            </p>
 
-          <p className="text-(--white) text-xs">The best place to play.</p>
-          <p className="text-(--white) text-xs">
-            Book your slot and enjoy the beautiful game.
-          </p>
-        </div>
-        <nav className="flex flex-row gap-12" aria-label="Social Links">
-          <div>
-            <h2 className="text-(--white) font-bold">Explore</h2>
-            <ul className="flex flex-col">
-              <li>
-                <Link
-                  href="/"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  Home
-                </Link>{" "}
-              </li>
-              <li>
-                {" "}
-                <Link
-                  href="/about"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                {" "}
-                <Link
-                  href="/how-it-works"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                {" "}
-                <Link
-                  href="/contact"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  Contact
-                </Link>
-              </li>
+            <address className="not-italic flex flex-col gap-2 text-sm text-white/70">
+              <span className="flex items-start gap-2">
+                <FaMapMarkerAlt className="mt-0.5 shrink-0" size={14} />
+                No. 14 Aminu Kano Crescent, Wuse II, Abuja
+              </span>
+              <span className="flex items-center gap-2">
+                <FaClock size={14} />
+                Open daily: 8:00 AM – 11:00 PM
+              </span>
+            </address>
+          </div>
+
+          {/* Explore */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-white font-bold text-lg tracking-tight">
+              Explore
+            </h2>
+            <ul className="flex flex-col gap-3">
+              {footerLinks.explore.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-white/70 text-sm hover:text-white hover:translate-x-1 transition-all duration-200 inline-block"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
-          <div>
-            <h2 className="text-(--white) font-bold">Support</h2>
-            <ul className="flex flex-col">
-              <li>
-                <Link
-                  href="contact"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  FAQs
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/booking-policy"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  Booking Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-(--white) text-xs cursor-pointer"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
+
+          {/* Support */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-white font-bold text-lg tracking-tight">
+              Support
+            </h2>
+            <ul className="flex flex-col gap-3">
+              {footerLinks.support.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-white/70 text-sm hover:text-white hover:translate-x-1 transition-all duration-200 inline-block"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
-        </nav>
 
-        <div className="flex flex-col gap-4 items-center md:flex md:flex-col xl:flex xl:flex-col xl:items-center xl:gap-4">
-          <h2 className="text-(--white) font-bold">Follow Us</h2>
-          <div className="flex gap-6 md:self-center">
-            {/* Facebook */}
-            <a
-              href="https://www.facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-            >
-              <FaFacebook
-                color="var(--white)"
-                size={30}
-                aria-hidden="true"
-                className="cursor-pointer"
-              />
-            </a>
-
-            {/* WhatsApp */}
-            <a
-              href="https://wa.me/2348012345678"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-            >
-              <FaWhatsapp
-                color="var(--white)"
-                size={30}
-                aria-hidden="true"
-                className="cursor-pointer"
-              />
-            </a>
-
-            {/* Instagram */}
-            <a
-              href="https://www.instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-            >
-              <FaInstagram
-                color="var(--white)"
-                size={30}
-                aria-hidden="true"
-                className="cursor-pointer"
-              />
-            </a>
+          {/* Socials */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-white font-bold text-lg tracking-tight">
+              Follow Us
+            </h2>
+            <p className="text-white/70 text-sm">
+              Join our community and stay updated.
+            </p>
+            <div className="flex gap-4">
+              {socials.map(({ name, href, icon: Icon }) => (
+                <a
+                  key={name}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={name}
+                  className="p-2.5 rounded-full bg-white/10 hover:bg-(--primary) transition-all duration-300 hover:scale-110 group"
+                >
+                  <Icon
+                    size={20}
+                    className="text-white group-hover:text-white"
+                  />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-      <div className="py-4 text-center border-t border-gray-600">
-        <p className="text-[0.625rem] text-gray-400">
-          © {year} GoalLine Turf. All rights reserved.
-        </p>
+
+      {/* Bottom bar */}
+      <div className="border-t border-white/10">
+        <div className="w-[90%] max-w-7xl mx-auto py-5 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p className="text-white/50 text-xs">
+            © {year} GoalLine Turf. All rights reserved.
+          </p>
+          <p className="text-white/50 text-xs">
+            Inspired by Ndubuaku Casper ❤️
+          </p>
+        </div>
       </div>
     </footer>
   );
 }
 
 export default Footer;
-// <address className="text-(--white)  text-xs font-bold">
-//       No. 14 Aminu Kano Crescent, Wuse II, Abuja, FCT, Nigeria
-//     </address>
-//     <p className="text-(--white) font-bold">
-//       Open daily:{" "}
-//       <time dateTime="08:00" className="text-xs">
-//         8:00 AM
-//       </time>{" "}
-//       –
-//       <time dateTime="23:00" className="text-xs">
-//         11:00 PM
-//       </time>
-//     </p>
