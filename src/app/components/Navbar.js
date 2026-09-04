@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import Hamburger from "./Hamburger";
 import navItems from "@/data/navItems";
+import { ArrowRight } from "lucide-react";
 
 function Navbar() {
   const [open, setOpen] = useState(false);
@@ -60,15 +61,23 @@ function Navbar() {
                 href={href}
                 aria-current={isActive ? "page" : undefined}
                 className={`
-          px-3 lg:px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200
+          group relative px-3 lg:px-4 py-3 text-sm font-semibold rounded-lg transition-colors duration-200
           ${
             isActive
-              ? "text-(--primary) bg-(--primary)/10"
-              : "text-(--text)/80 hover:text-(--text) hover:bg-(--bg)/50"
+              ? "text-(--primary)"
+              : "text-(--text)/80 hover:text-(--text)"
           }
         `}
               >
                 {label}
+                <span
+                  className={`absolute inset-x-3 lg:inset-x-4 -bottom-0.5 h-0.5 rounded-full bg-(--primary) transition-transform duration-300 ease-out ${
+                    isActive
+                      ? "scale-x-100"
+                      : "scale-x-0 group-hover:scale-x-100"
+                  }`}
+                  aria-hidden="true"
+                />
               </Link>
             );
           })}
@@ -76,9 +85,14 @@ function Navbar() {
         <Link
           href="/booking"
           onClick={() => dispatch({ type: "RESET" })}
-          className="hidden landscape:flex md:flex items-center py-2.5 px-5 rounded-xl bg-(--primary) text-white text-sm font-bold transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+          className="group hidden landscape:flex md:flex items-center gap-2 py-2.5 px-5 rounded-xl bg-(--primary) text-white text-sm font-bold transition-all duration-300 hover:gap-3 hover:shadow-lg hover:-translate-y-0.5"
         >
           Book Now
+          <ArrowRight
+            size={16}
+            className="transition-transform duration-300 group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
         </Link>
         {/* Hamburger biutton */}
         <div className="md:hidden landscape:hidden">

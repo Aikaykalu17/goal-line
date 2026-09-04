@@ -131,6 +131,7 @@ export default function PricingPage() {
               Day rate (₦/hr)
               <input
                 type="text"
+                inputMode="numeric"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
                 value={formatNumber(form.weekday_day)}
                 onChange={(event) =>
@@ -143,6 +144,7 @@ export default function PricingPage() {
               <input
                 type="text"
                 placeholder="0"
+                inputMode="numeric"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
                 value={formatNumber(form.weekday_night)}
                 onChange={(event) =>
@@ -161,6 +163,7 @@ export default function PricingPage() {
               <input
                 type="text"
                 placeholder="0"
+                inputMode="numeric"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
                 value={formatNumber(form.weekend_day)}
                 onChange={(event) =>
@@ -173,6 +176,7 @@ export default function PricingPage() {
               <input
                 type="text"
                 placeholder="0"
+                inputMode="numeric"
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
                 value={formatNumber(form.weekend_night)}
                 onChange={(event) =>

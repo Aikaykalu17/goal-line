@@ -68,6 +68,7 @@ export default function BookingsPage() {
   const [actioningId, setActioningId] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
+  console.log(bookings);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   useEffect(() => {
@@ -224,66 +225,68 @@ export default function BookingsPage() {
               )}
 
               {!isLoading &&
-                bookings.map((booking) => (
-                  <tr key={booking.id} className="border-t border-gray-100">
-                    <td
-                      className="p-3 font-mono text-xs font-bold"
-                      title={booking.id}
-                    >
-                      {booking.id.slice(0, 8)}
-                    </td>
-                    <td className="p-3 text-xs">
-                      {format(new Date(booking.start_at), "MMM d, yyyy")}
-                    </td>
-                    <td className="p-3 text-xs">
-                      {format(new Date(booking.start_at), "h:mm a")} –{" "}
-                      {format(new Date(booking.end_at), "h:mm a")}
-                    </td>
-                    <td className="p-3 text-xs">{booking.user_full_name}</td>
-                    <td className="p-3 text-xs">{booking.players}</td>
-                    <td className="p-3 text-xs">
-                      ₦{formatCurrency(booking.total)}
-                    </td>
-                    <td className="p-3 text-xs">
-                      <span
-                        className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
-                          STATUS_STYLES[getBookingStatus(booking)] ||
-                          "bg-gray-100 text-gray-700"
-                        }`}
+                bookings.map((booking) => {
+                  return (
+                    <tr key={booking.id} className="border-t border-gray-100">
+                      <td
+                        className="p-3 font-mono text-xs font-bold"
+                        title={booking.booking_code}
                       >
-                        {formatStatusLabel(getBookingStatus(booking))}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      {getBookingStatus(booking) === "pending" ? (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleStatusChange(booking.id, "confirmed")
-                            }
-                            disabled={actioningId === booking.id}
-                            className="cursor-pointer rounded border border-green-600 px-2 py-1 text-xs text-green-700 disabled:opacity-50"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleStatusChange(booking.id, "cancelled")
-                            }
-                            disabled={actioningId === booking.id}
-                            className="cursor-pointer rounded border border-red-600 px-2 py-1 text-xs text-red-700 disabled:opacity-50"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">–</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        {booking.booking_code}
+                      </td>
+                      <td className="p-3 text-xs">
+                        {format(new Date(booking.start_at), "MMM d, yyyy")}
+                      </td>
+                      <td className="p-3 text-xs">
+                        {format(new Date(booking.start_at), "h:mm a")} –{" "}
+                        {format(new Date(booking.end_at), "h:mm a")}
+                      </td>
+                      <td className="p-3 text-xs">{booking.user_full_name}</td>
+                      <td className="p-3 text-xs">{booking.players}</td>
+                      <td className="p-3 text-xs">
+                        ₦{formatCurrency(booking.total)}
+                      </td>
+                      <td className="p-3 text-xs">
+                        <span
+                          className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
+                            STATUS_STYLES[getBookingStatus(booking)] ||
+                            "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {formatStatusLabel(getBookingStatus(booking))}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        {getBookingStatus(booking) === "pending" ? (
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleStatusChange(booking.id, "confirmed")
+                              }
+                              disabled={actioningId === booking.id}
+                              className="cursor-pointer rounded border-green-600 px-2 py-1 text-xs text-green-700 disabled:opacity-50"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleStatusChange(booking.id, "cancelled")
+                              }
+                              disabled={actioningId === booking.id}
+                              className="cursor-pointer rounded border-red-600 px-2 py-1 text-xs text-red-700 disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">–</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -299,12 +302,12 @@ export default function BookingsPage() {
         {!isLoading &&
           bookings.map((booking) => (
             <div
-              key={booking.id}
+              key={booking.booking_code}
               className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="font-mono text-[11px] font-bold text-gray-700">
-                  {booking.id.slice(0, 8)}
+                  {booking.booking_code.slice(0, 8)}
                 </div>
                 <span
                   className={`inline-block rounded px-2 py-0.5 text-[10px] font-semibold ${
@@ -353,15 +356,19 @@ export default function BookingsPage() {
               {getBookingStatus(booking) === "pending" && (
                 <div className="mt-1 flex gap-2">
                   <button
-                    onClick={() => handleStatusChange(booking.id, "confirmed")}
-                    disabled={actioningId === booking.id}
+                    onClick={() =>
+                      handleStatusChange(booking.booking_code, "confirmed")
+                    }
+                    disabled={actioningId === booking.booking_code}
                     className="flex-1 cursor-pointer rounded border border-green-600 px-2 py-2 text-xs font-medium text-green-700 disabled:opacity-50"
                   >
                     Confirm
                   </button>
                   <button
-                    onClick={() => handleStatusChange(booking.id, "cancelled")}
-                    disabled={actioningId === booking.id}
+                    onClick={() =>
+                      handleStatusChange(booking.booking_code, "cancelled")
+                    }
+                    disabled={actioningId === booking.booking_code}
                     className="flex-1 cursor-pointer rounded border border-red-600 px-2 py-2 text-xs font-medium text-red-700 disabled:opacity-50"
                   >
                     Cancel

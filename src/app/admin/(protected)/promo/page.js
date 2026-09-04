@@ -179,6 +179,7 @@ export default function PromoPage() {
             Discount Percentage
             <input
               type="number"
+              inputMode="numeric"
               min="1"
               max="100"
               value={form.discount_percent}

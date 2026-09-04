@@ -38,3 +38,14 @@ export async function getUpcomingBookings() {
   if (error) throw new Error(error.message);
   return data;
 }
+
+export async function getBookingByCode(bookingCode) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("booking_code", bookingCode.toUpperCase()) // make it case-insensitive
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}

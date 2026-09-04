@@ -7,13 +7,13 @@ import HeroBackground from "./HeroBackground";
 function Hero() {
   return (
     <HeroBackground backgroundImage="/images/fullPitch.webp" priority>
-      <div className="w-[90%] max-w-5xl h-full mx-auto flex-col justify-center gap-5 sm:gap-6 text-center md:text-left">
-        <h1 className="text-white text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-tight drop-shadow-lg">
+      <div className="w-[90%] max-w-5xl h-full mx-auto flex-col justify-center gap-4 sm:gap-5 text-center md:text-left">
+        <h1 className="text-white text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.1] drop-shadow-lg">
           Book. Play. <br className="hidden sm:block" />
           Enjoy Football.
         </h1>
 
-        <p className="text-white/90 text-sm sm:text-base font-semibold drop-shadow-md">
+        <p className="text-white/90 text-sm sm:text-base font-semibold leading-snug drop-shadow-md">
           All at GoalLine Turf
         </p>
 

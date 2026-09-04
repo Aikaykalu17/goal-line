@@ -44,8 +44,9 @@ import { getPricingConfigAction } from "../admin/(protected)/pricing/actions";
 import { parseTimeString } from "@/utils/time";
 import getDurationDisplay from "@/utils/durationDisplay";
 import { getDurationHours } from "@/utils/hours";
+import generateBookingCode from "@/utils/generateBookingCode";
 
-// ✅ Initial state
+// Initial state
 const initialState = {
   step: 1,
   booking: null,
@@ -176,7 +177,7 @@ export default function Booking() {
     state.selectedDate,
   );
 
-  // ✅ New billing + display logic
+  //  New billing + display logic
   const durationHours = getDurationHours(
     selectedStartDateTime,
     selectedEndDateTime,
@@ -214,6 +215,9 @@ export default function Booking() {
 
     const startDateTime = parse(state.startTime, "hh:mm a", state.selectedDate);
     const endDateTime = parse(state.endTime, "hh:mm a", state.selectedDate);
+    const minutes = Math.round(durationHours * 60);
+    const discount = state.discountApplied;
+    const total = subtotal - discount;
 
     try {
       const bookingType =
@@ -224,6 +228,8 @@ export default function Booking() {
       const notesPayload = [state.notes?.trim(), `booking_type:${bookingType}`]
         .filter(Boolean)
         .join(" | ");
+
+      const booking_code = generateBookingCode();
 
       const result = await createBookingAction({
         user_full_name: state.fullName,
@@ -240,6 +246,7 @@ export default function Booking() {
         discount,
         total,
         promo_code: state.promoCode,
+        booking_code,
       });
 
       dispatch({
@@ -260,6 +267,72 @@ export default function Booking() {
 
   return (
     <div className="space-y-6 w-full flex flex-col gap-4 items-center">
+      {/* Availability Timeline */}
+      {step === 1 ? (
+        <div className="w-full rounded-2xl border border-(--primary)/20 bg-(--primary)/5 px-4 py-3 sm:px-5 sm:py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5 rounded-lg bg-gray-50/70 p-3">
+              <Info
+                size={16}
+                className="mt-0.5 shrink-0 text-(--primary)"
+                aria-hidden="true"
+              />
+              <div className="space-y-1 text-xs font-semibold leading-5 text-(--text)">
+                <p>
+                  On the{" "}
+                  <span className="font-extrabold text---primary)">
+                    Today&apos;s Availability Timeline
+                  </span>
+                </p>
+
+                <p className="pl-1">
+                  <span className="font-extrabold uppercase text-green-600">
+                    Green
+                  </span>
+                  : Your booking time
+                </p>
+
+                <p className="pl-1">
+                  <span className="font-extrabold uppercase text-gray-500">
+                    Grey
+                  </span>
+                  : Already booked but open to join
+                </p>
+
+                <p className="pl-1">
+                  <span className="font-extrabold uppercase text-(--primary)">
+                    Private Booking
+                  </span>
+                  : Not shared. Reserved just for you.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 pl-6 sm:shrink-0 sm:pl-0">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="h-2.5 w-2.5 rounded-full bg-green-500"
+                  aria-hidden="true"
+                />
+                <span className="text-[11px] font-bold text-gray-700 sm:text-xs">
+                  Your booking time
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="h-2.5 w-2.5 rounded-full bg-gray-400"
+                  aria-hidden="true"
+                />
+                <span className="text-[11px] font-bold text-gray-700 sm:text-xs">
+                  Already booked
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        ""
+      )}
       {/* Stepper */}
       <div className="flex items-center justify-center gap-1">
         {["Choose Date & Time", "Your Details", "Review Booking"].map(
@@ -302,69 +375,6 @@ export default function Booking() {
         {/* Step 1: Date & Time */}
         {step === 1 && (
           <>
-            {/* Availability legend */}
-            <div className="w-full rounded-2xl border border-(--primary)/20 bg-(--primary)/5 px-4 py-3 sm:px-5 sm:py-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-2.5 rounded-lg bg-gray-50/70 p-3">
-                  <Info
-                    size={16}
-                    className="mt-0.5 shrink-0 text-(--primary)"
-                    aria-hidden="true"
-                  />
-                  <div className="space-y-1 text-xs font-semibold leading-5 text-(--text)">
-                    <p>
-                      On the{" "}
-                      <span className="font-extrabold text---primary)">
-                        Today&apos;s Availability Timeline
-                      </span>
-                    </p>
-
-                    <p className="pl-1">
-                      <span className="font-extrabold uppercase text-green-600">
-                        Green
-                      </span>
-                      : Your booking time
-                    </p>
-
-                    <p className="pl-1">
-                      <span className="font-extrabold uppercase text-gray-500">
-                        Grey
-                      </span>
-                      : Already booked but open to join
-                    </p>
-
-                    <p className="pl-1">
-                      <span className="font-extrabold uppercase text-(--primary)">
-                        Private Booking
-                      </span>
-                      : Not shared. Reserved just for you.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 pl-6 sm:shrink-0 sm:pl-0">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full bg-green-500"
-                      aria-hidden="true"
-                    />
-                    <span className="text-[11px] font-bold text-gray-700 sm:text-xs">
-                      Your booking time
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full bg-gray-400"
-                      aria-hidden="true"
-                    />
-                    <span className="text-[11px] font-bold text-gray-700 sm:text-xs">
-                      Already booked
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {state.errorMessage && (
               <p className="text-center text-sm font-semibold text-(--error) md:col-span-2">
                 {state.errorMessage}
@@ -374,6 +384,7 @@ export default function Booking() {
               selectedDate={state.selectedDate}
               onSelectDate={(date) => dispatch({ type: "SET_DATE", date })}
             />
+
             {state.selectedDate && (
               <div className="flex flex-col-reverse gap-4">
                 <SelectTime

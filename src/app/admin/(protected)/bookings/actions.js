@@ -9,6 +9,7 @@ import {
   sendPaymentConfirmationEmail,
   sendPendingBookingReminderEmail,
 } from "@/lib/email";
+import { createBooking } from "@/lib/supabaseClient";
 
 const ALLOWED_STATUSES = ["pending", "confirmed", "cancelled", "expired"];
 
@@ -55,7 +56,7 @@ export async function updateBookingStatusAction(id, newStatus) {
   const { data: existingBooking, error: fetchError } = await supabase
     .from("bookings")
     .select(
-      "id, user_full_name, user_email, status, notes, players, start_at, end_at, total",
+      "id, booking_code, user_full_name, user_email, user_phone, status, notes, players, start_at, end_at, total",
     )
     .eq("id", id)
     .maybeSingle();
@@ -132,7 +133,7 @@ export async function syncExpiredBookingsAction() {
   const { data: pendingBookings, error: fetchError } = await supabase
     .from("bookings")
     .select(
-      "id, created_at, user_full_name, user_email, status, notes, players, start_at, end_at, total",
+      "id, booking_code, created_at, user_full_name, user_email, status, notes, players, start_at, end_at, total",
     )
     .eq("status", "pending");
 
@@ -178,4 +179,15 @@ export async function syncExpiredBookingsAction() {
   revalidatePath("/admin/calendar");
 
   return { updated: expiredIds.length };
+}
+
+export async function createBookingAction(bookingData) {
+  console.log("SERVER RECEIVED:", bookingData);
+  // bookingData MUST include booking_code
+  if (!bookingData.booking_code) {
+    throw new Error("booking_code is required");
+  }
+
+  const result = await createBooking(bookingData);
+  return result;
 }

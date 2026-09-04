@@ -101,6 +101,7 @@ export async function createBookingAction({
   discount,
   total,
   promo_code,
+  booking_code,
 }) {
   const supabase = createSupabaseAdminClient();
 
@@ -226,6 +227,7 @@ export async function createBookingAction({
       user_email: user_email.trim(),
       user_phone: user_phone.trim(),
       players: playersNumber,
+      booking_code: booking_code,
       notes: notesPayload,
       start_at: start.toISOString(),
       end_at: end.toISOString(),

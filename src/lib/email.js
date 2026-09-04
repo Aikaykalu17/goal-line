@@ -86,13 +86,13 @@ export async function sendBookingConfirmationEmail({
     const result = await resend.emails.send({
       from: DEFAULT_FROM,
       to: customerEmail,
-      subject: `Booking confirmed - GoalLine Turf #${booking.id}`,
+      subject: `Booking confirmed - GoalLine Turf #${booking_code}`,
       html: `
         ${buildBrandHeader("Booking confirmed")}
           <p style="margin: 0 0 12px; font-size: 16px;">Hi ${escapeHtml(customerName || "Player")},</p>
           <p style="margin: 0 0 18px; color: #344234;">Your booking at GoalLine Turf has been confirmed successfully.</p>
 
-          <p style="margin: 0 0 8px;"><strong>Booking ID:</strong> ${escapeHtml(booking.id)}</p>
+          <p style="margin: 0 0 8px;"><strong>Booking CODE:</strong> ${escapeHtml(booking_code)}</p>
           <p style="margin: 0 0 8px;"><strong>Date & Time:</strong> ${escapeHtml(formatDate(booking.start_at))} to ${escapeHtml(formatDate(booking.end_at))}</p>
           <p style="margin: 0 0 8px;"><strong>Booking Type:</strong> ${escapeHtml(getBookingTypeLabel(booking.notes, booking.players))}</p>
           <p style="margin: 0 0 8px;"><strong>Players:</strong> ${escapeHtml(booking.players)}</p>

@@ -16,9 +16,9 @@ function Hamburger({ isOpen, onClose, navItems }) {
       {/* Backdrop blur */}
       <div className="absolute inset-0 bg-(--bg)/80 backdrop-blur-md" />
 
-      <div className="relative h-[calc(100dvh-72px)] flex flex-col px-6 pt-6 pb-4">
+      <div className="relative h-[calc(100dvh-72px)] flex flex-col px-5 pt-5 pb-4">
         {/* Scrollable list */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden -mx-6 px-6 pb-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden -mx-5 px-5 pb-4">
           <HamburgerList navItems={navItems} onClose={onClose} />
         </div>
 
@@ -27,11 +27,11 @@ function Hamburger({ isOpen, onClose, navItems }) {
           <Link
             href="/booking"
             onClick={onClose}
-            className="group w-full flex items-center justify-center gap-3 px-6 py-4 bg-(--primary) text-white rounded-2xl text-base font-bold shadow-lg hover:shadow-(--primary)/30 transition-all duration-300 active:scale-95"
+            className="group w-full flex items-center justify-center gap-2.5 px-6 py-3.5 bg-(--primary) text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-(--primary)/30 transition-all duration-300 active:scale-95"
           >
             Book Now
             <FaArrowRight
-              size={16}
+              size={14}
               className="transition-transform duration-300 group-hover:translate-x-1"
             />
           </Link>

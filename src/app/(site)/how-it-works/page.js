@@ -1,6 +1,6 @@
 import ProcessList from "@/app/components/ProcessList";
 import Reveal from "@/app/components/Reveal";
-import processSteps from "@/data/process-steps";
+import processSteps from "@/data/processSteps";
 import {
   ArrowRight,
   Trophy,
@@ -80,9 +80,9 @@ function Page() {
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-(--muted)">
                   This shows you the turf&apos;s real schedule for the day you
-                  pick. Green means the time is free. Grey means someone has
-                  already booked that time. This helps you know what time is
-                  still open before you book.
+                  pick. Green shows your booking time range/duration. Grey means
+                  it has been booked by others who are open to sharing. This
+                  helps you know what time is still open before you book.
                 </p>
               </div>
 
@@ -92,8 +92,7 @@ function Page() {
                     Green, available
                   </p>
                   <p className="mt-1 text-sm leading-6 text-(--muted)">
-                    This time is free. No one has booked it. You can pick any
-                    part of it.
+                    Indicates your booking time
                   </p>
                 </div>
               </div>
@@ -205,7 +204,7 @@ function Page() {
                   </p>
                 </li>
                 <li className="flex flex-col gap-1.5">
-                  <span className="w-fit rounded-full bg-gray-200 px-2.5 py-1 text-xs font-bold text-gray-600">
+                  <span className="w-fit rounded-full bg-red-400 px-2.5 py-1 text-xs font-bold text-gray-600">
                     Expired
                   </span>
                   <p className="text-sm leading-6 text-(--muted)">
@@ -237,9 +236,9 @@ function Page() {
                   Pricing management
                 </p>
                 <p className="mt-2 text-sm leading-6 text-(--muted)">
-                  Admins can set different prices for different days or times.
-                  Prices can go up or down for weekends, evenings, nights, or
-                  special periods, depending on demand.
+                  GoalLine management can set different prices for different
+                  days or times. Prices can go up or down for weekends,
+                  evenings, nights, or special periods, depending on demand.
                 </p>
               </div>
             </div>

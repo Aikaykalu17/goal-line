@@ -2,7 +2,7 @@ const processSteps = [
   {
     number: "1",
     title: "Choose your day and see the real availability",
-    text: "Start by selecting the date you want to play. The system shows your day’s availability range, which is the time window the turf is open for bookings. The green sections signal open time slots, while the grey sections mean the turf is unavailable for that period. A date can be made unavailable for several reasons, including maintenance, a full-day booking by an organisation for a football event, or a private reservation that has already been locked in.",
+    text: "Start by selecting the date you want to play. The system shows your day’s availability range, which is the time window the turf is open for bookings. The green range signals your own booking time, while the grey range means the turf has been booked by others who are willing to share. A date can be made unavailable for several reasons, including maintenance, a full-day booking by an organisation for a football event, or a private reservation that has already been locked in.",
   },
   {
     number: "2",
@@ -32,7 +32,7 @@ const processSteps = [
   {
     number: "7",
     title: "Extra time can be added after confirmation",
-    text: "Sometimes the match is still going well and the players do not want to stop. For confirmed bookings, extra minutes or hours can be added to the ticket so the session can continue beyond the original booked window. This is useful when the players want to keep playing, are still enjoying the match, or simply are not ready to leave the pitch yet.",
+    text: "Add more minutes or hours to your booking and keep playing. Extra time is paid by you or your group",
   },
 ];
 

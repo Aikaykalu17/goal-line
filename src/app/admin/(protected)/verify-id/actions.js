@@ -6,17 +6,20 @@ import { requireAdmin } from "@/lib/authGuard";
 // Admin-only booking lookup by ID. Returns full booking details (including
 // customer name/email/phone), so it must go through the service-role
 // client on the server, never the anon key from the browser.
-export async function verifyBookingIdAction(id) {
+export async function verifyBookingCodeAction(booking_code) {
   await requireAdmin();
 
-  const trimmedId = String(id || "").trim();
-  if (!trimmedId) return null;
+  const trimmedCode = String(booking_code || "")
+    .trim()
+    .toUpperCase(); // 2. uppercase
+  if (!trimmedCode) return null;
 
   const supabase = createSupabaseAdminClient();
+
   const { data, error } = await supabase
     .from("bookings")
     .select("*")
-    .eq("id", trimmedId)
+    .eq("booking_code", trimmedCode) // 3. changed from id to booking_code
     .maybeSingle();
 
   if (error) {

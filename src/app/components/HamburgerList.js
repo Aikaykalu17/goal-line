@@ -6,7 +6,7 @@ function HamburgerList({ navItems, onClose }) {
   const pathname = usePathname();
 
   return (
-    <ul className="flex flex-col gap-1.5">
+    <ul className="flex flex-col gap-1">
       {navItems.map((item) => {
         const isActive = pathname === item.href;
 
@@ -16,22 +16,22 @@ function HamburgerList({ navItems, onClose }) {
               href={item.href}
               onClick={onClose}
               aria-current={isActive ? "page" : undefined}
-              className={`group flex items-center gap-3 px-3 py-3.5 rounded-xl transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive ? "bg-(--primary)/20" : "hover:bg-(--white)/10"
               }`}
             >
               <div
-                className={`p-2 rounded-lg transition-all duration-200 ${
+                className={`p-1.5 rounded-md transition-all duration-200 ${
                   isActive ? "bg-(--primary)" : "bg-(--white)/10"
                 }`}
               >
                 <item.icon
-                  size={20}
+                  size={16}
                   color={isActive ? "white" : "var(--white)"}
                 />
               </div>
               <span
-                className={`text-[15px] font-semibold transition-colors ${
+                className={`text-sm font-semibold transition-colors ${
                   isActive ? "text-(--primary)" : "text-white"
                 }`}
               >

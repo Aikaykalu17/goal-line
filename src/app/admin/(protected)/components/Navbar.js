@@ -24,7 +24,7 @@ export const PRIMARY_LINKS = [
 ];
 
 export const MORE_LINKS = [
-  { href: "/admin/verify-id", label: "Verify ID", icon: FaCheckCircle },
+  { href: "/admin/verify-id", label: "Verify Code", icon: FaCheckCircle },
   { href: "/admin/pricing", label: "Pricing", icon: FaMoneyBillWave },
   { href: "/admin/promo", label: "Promo Codes", icon: FaTag },
   { href: "/admin/reports", label: "Reports", icon: FaChartBar },

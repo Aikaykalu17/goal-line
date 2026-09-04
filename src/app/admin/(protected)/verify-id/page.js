@@ -2,10 +2,18 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { FaSearch, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import {
+  FaSearch,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaClock,
+} from "react-icons/fa";
 import formatCurrency from "@/utils/formatCurrency";
 import SpinnerMini from "@/app/components/SpinnerMini";
-import { updateBookingExtraTimeAction, verifyBookingIdAction } from "./actions";
+import {
+  updateBookingExtraTimeAction,
+  verifyBookingCodeAction,
+} from "./actions";
 
 const STATUS_STYLES = {
   confirmed: "bg-green-100 text-green-700",
@@ -52,22 +60,22 @@ export default function VerifyIdPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isUpdatingExtraTime, setIsUpdatingExtraTime] = useState(false);
   const [extraMinutes, setExtraMinutes] = useState(30);
-  const [result, setResult] = useState(null); // "not-found" | booking object
+  const [result, setResult] = useState(null); //
   const [hasSearched, setHasSearched] = useState(false);
   const [extraTimeMessage, setExtraTimeMessage] = useState("");
 
   async function handleVerify(e) {
     e.preventDefault();
-    const id = query.trim();
+    const code = query.trim();
 
-    if (!id) return;
+    if (!code) return;
 
     setIsSearching(true);
     setHasSearched(true);
     setResult(null);
     setExtraTimeMessage("");
 
-    const booking = await verifyBookingIdAction(id);
+    const booking = await verifyBookingCodeAction(code);
 
     setIsSearching(false);
     setResult(booking || "not-found");
@@ -130,36 +138,43 @@ export default function VerifyIdPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-(--text)">Verify Booking ID</h1>
+      <h1 className="text-xl font-bold text-(--text)">Verify Booking Code</h1>
       <p className="mt-1 text-xs text-gray-500 font-medium">
-        Enter a booking ID to verify its validity.
+        Enter a booking CODE to verify its validity.
       </p>
 
       <form
         onSubmit={handleVerify}
-        className="flex flex-col mt-4 md:flex md:flex-row gap-3 max-w-md"
+        className="flex flex-col mt-4 md:flex-row gap-3 max-w-md"
       >
-        <input
-          type="text"
-          placeholder="e.g. 1a2b3c4d"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 border border-gray-300 rounded p-2 text-sm"
-        />
+        <div className="relative flex-1">
+          <FaSearch
+            size={12}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            aria-hidden="true"
+          />
+          <input
+            type="text"
+            placeholder="e.g. GLT-2323-89769"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full border border-gray-300 rounded-xl bg-gray-50/60 py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-(--forest) focus:bg-white focus:ring-2 focus:ring-(--forest)/15"
+          />
+        </div>
         <button
           type="submit"
           disabled={isSearching}
-          className="flex items-center justify-center gap-2 bg-(--primary) text-(--white) px-4 py-2 rounded text-xs disabled:opacity-60 cursor-pointer"
+          className="flex items-center justify-center gap-2 rounded-xl bg-(--forest) px-5 py-2.5 text-xs font-semibold text-(--white) transition-all duration-300 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
         >
           {isSearching ? (
             <>
               <SpinnerMini />
-              <span className="text-xs">Verifying...</span>
+              <span>Verifying...</span>
             </>
           ) : (
             <>
               <FaSearch size={12} aria-hidden="true" />
-              <span className="text-xs">Verify ID</span>
+              <span>Verify Code</span>
             </>
           )}
         </button>
@@ -175,60 +190,92 @@ export default function VerifyIdPage() {
           )}
 
           {isBookingResult && (
-            <div className={`rounded-lg p-4 space-y-3 ${resultCardClasses}`}>
-              <p className="flex flex-col items-center gap-2 font-semibold text-green-700 md:flex md:flex-row md:items-center">
-                <span className="flex items-center gap-2">
-                  <FaCheckCircle />
-                  Booking ID:
-                </span>
-                <span className="font-mono text-xs">{result.id}</span>
-              </p>
-              <p className="text-sm font-bold">
-                Status:{" "}
+            <div className={`rounded-2xl p-5 space-y-4 ${resultCardClasses}`}>
+              {/* Header: Booking code + status */}
+              <div className="flex flex-col gap-3 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100">
+                    <FaCheckCircle
+                      className="text-green-700"
+                      size={16}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-500">
+                      Booking Code
+                    </p>
+                    <p className="font-mono text-sm font-bold text-(--text)">
+                      {result.booking_code}
+                    </p>
+                  </div>
+                </div>
+
                 <span
-                  className={`inline-block px-2 py-0.5 rounded text-xs font-bold border  ${
+                  className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold ${
                     STATUS_STYLES[bookingStatus] || "bg-gray-100 text-gray-700"
                   }`}
                 >
                   {formatStatusText(bookingStatus)}
                 </span>
-              </p>
-              <p className="text-sm font-bold">
-                Date:{" "}
-                <span className="font-medium">
-                  {format(new Date(result.start_at), "MMMM d, yyyy")}
-                </span>
-              </p>
-              <p className="text-sm font-bold">
-                Time:{" "}
-                <span className="font-medium">
-                  {format(new Date(result.start_at), "h:mm a")} –{" "}
-                  {format(new Date(result.end_at), "h:mm a")}
-                </span>
-              </p>
-              <p className="text-sm font-bold">
-                Customer:{" "}
-                <span className="font-medium">{result.user_full_name}</span>
-              </p>
-              <p className="text-sm font-bold">
-                Booking Type:{" "}
-                <span className="font-medium">
-                  {String(result.notes || "").includes("booking_type:open")
-                    ? "Open to others"
-                    : String(result.notes || "").includes("booking_type:solo")
-                      ? "Solo / Individual"
-                      : "Private booking"}
-                </span>
-              </p>
-              <p className="text-sm font-bold">
-                Amount:{" "}
-                <span className="font-medium">
-                  ₦{formatCurrency(result.total)}
-                </span>
-              </p>
+              </div>
 
+              {/* Booking details */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-xl bg-white/60 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+                    Date
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-(--text)">
+                    {format(new Date(result.start_at), "MMMM d, yyyy")}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white/60 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+                    Time
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-(--text)">
+                    {format(new Date(result.start_at), "h:mm a")} –{" "}
+                    {format(new Date(result.end_at), "h:mm a")}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white/60 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+                    Customer
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-(--text)">
+                    {result.user_full_name}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white/60 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+                    Booking Type
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-(--text)">
+                    {String(result.notes || "").includes("booking_type:open")
+                      ? "Open to others"
+                      : String(result.notes || "").includes("booking_type:solo")
+                        ? "Solo / Individual"
+                        : "Private booking"}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white/60 p-3 sm:col-span-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+                    Amount
+                  </p>
+                  <p className="mt-0.5 text-sm font-bold text-(--primary)">
+                    ₦{formatCurrency(result.total)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Extra time / status notice */}
               {rawBookingStatus === "confirmed" ? (
-                <div className="rounded border border-dashed border-gray-300 bg-white/60 p-3">
+                <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 p-4">
                   <label className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-gray-600">
                     Add extra time (minutes)
                   </label>
@@ -239,15 +286,22 @@ export default function VerifyIdPage() {
                       step="15"
                       value={extraMinutes}
                       onChange={(e) => setExtraMinutes(e.target.value)}
-                      className="flex-1 rounded border border-gray-300 p-2 text-sm"
+                      className="flex-1 rounded-lg border border-gray-300 bg-white p-2.5 text-sm outline-none transition-colors focus:border-(--forest) focus:ring-2 focus:ring-(--forest)/15"
                     />
                     <button
                       type="button"
                       onClick={handleExtraTimeSave}
                       disabled={isUpdatingExtraTime}
-                      className="rounded bg-(--primary) px-3 py-2 text-xs font-semibold text-white disabled:opacity-60 cursor-pointer"
+                      className="flex items-center justify-center gap-2 rounded-lg bg-(--primary) px-4 py-2.5 text-xs font-semibold text-white transition-all duration-300 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                     >
-                      {isUpdatingExtraTime ? "Saving..." : "Save"}
+                      {isUpdatingExtraTime ? (
+                        <>
+                          <SpinnerMini />
+                          Saving
+                        </>
+                      ) : (
+                        "Save"
+                      )}
                     </button>
                   </div>
                   {extraTimeMessage && (
@@ -257,7 +311,12 @@ export default function VerifyIdPage() {
                   )}
                 </div>
               ) : (
-                <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-800">
+                <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs font-medium text-amber-800">
+                  <FaClock
+                    className="mt-0.5 shrink-0"
+                    size={12}
+                    aria-hidden="true"
+                  />
                   Extra time is available only for confirmed bookings.
                 </div>
               )}

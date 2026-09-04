@@ -8,15 +8,14 @@ import { format } from "date-fns";
 import { FaCheckCircle, FaHome, FaRegCopy, FaCheck } from "react-icons/fa";
 
 import getDurationDisplay from "@/utils/durationDisplay";
-
 import formatCurrency from "@/utils/formatCurrency";
 
-export default function BookingConfirmation({ booking, bookingId }) {
+export default function BookingConfirmation({ booking }) {
   const confirmationRef = useRef(null);
   const [copied, setCopied] = useState(false);
 
-  function handleCopyId() {
-    navigator.clipboard.writeText(bookingId);
+  function handleCopyCode() {
+    navigator.clipboard.writeText(booking.booking_code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -36,7 +35,7 @@ export default function BookingConfirmation({ booking, bookingId }) {
       height: scrollHeight,
     });
     const link = document.createElement("a");
-    link.download = `booking-${bookingId}.png`;
+    link.download = `booking-${booking.booking_code}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
@@ -58,7 +57,7 @@ export default function BookingConfirmation({ booking, bookingId }) {
       format: [canvas.width + 16, canvas.height + 16],
     });
     pdf.addImage(imgData, "PNG", 8, 8, canvas.width, canvas.height);
-    pdf.save(`booking-${bookingId}.pdf`);
+    pdf.save(`booking-${booking.booking_code}.pdf`);
   }
 
   return (
@@ -134,31 +133,28 @@ export default function BookingConfirmation({ booking, bookingId }) {
           }}
         >
           <p
-            className="text-sm font-bold flex flex-col items-center gap-2"
+            className="text-sm font-bold flex items-center gap-2 justify-center"
             style={{ color: "#17201c", width: "100%", margin: 0 }}
           >
-            Booking ID:
-            <span
-              className="flex flex-col items-center gap-3"
-              style={{ width: "100%" }}
-            >
+            Booking Code:
+            <span className="flex  items-center gap-3">
               <span
                 className="font-extrabold"
                 style={{
                   color: "#17201c",
-                  width: "100%",
+
                   overflowWrap: "anywhere",
                   wordBreak: "break-word",
                   lineHeight: 1.5,
                   letterSpacing: "-0.02em",
                 }}
               >
-                {bookingId}
+                {booking.booking_code}
               </span>
               <button
                 type="button"
-                onClick={handleCopyId}
-                aria-label="Copy booking ID"
+                onClick={handleCopyCode}
+                aria-label="Copy booking code"
                 className="text-(--primary)"
                 style={{ color: "#008a4c" }}
               >
