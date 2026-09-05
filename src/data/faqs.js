@@ -9,7 +9,7 @@ const faqs = [
     id: 2,
     question: "What are your operating hours?",
     answer:
-      "GoalLine Turf is open daily from 6:00 AM to 11:00 PM, so you can play morning, afternoon, or evening matches.",
+      "GoalLine Turf is open daily from 8:00 AM to 11:00 PM, so you can play morning, afternoon, or evening matches.",
   },
   {
     id: 3,

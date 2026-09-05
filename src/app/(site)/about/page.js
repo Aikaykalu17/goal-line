@@ -16,10 +16,10 @@ function Page() {
         imagePosition="center bottom"
         className="v-shape flex flex-col gap-4 pt-12 pl-8 md:pt-20 md:pl-20"
       >
-        <h2 className="text-(--white) text-2xl xl:text-5xl font-bold">
+        <h2 className="text-white text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.1] drop-shadow-lg">
           About <span className="text-(--primary)">GoalLine Turf</span>
         </h2>
-        <p className="text-(--white) text-xs">
+        <p className="text-white/90 text-sm sm:text-base font-semibold leading-snug drop-shadow-md">
           More than just a pitch - it is where <br /> good games and great
           moments happen.
         </p>

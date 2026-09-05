@@ -116,7 +116,7 @@ export default function AdminProtectedLayout({ children }) {
 
         <div className="flex min-h-screen flex-1 flex-col">
           <Navbar />
-          <main className="flex-1 p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 [@media(orientation:landscape)_and_(max-height:750px)]:pb-40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pv-s">
+          <main className="flex-1 p-4 pt-20 sm:p-6 sm:pt-20 md:p-8 md:pt-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-8">
             {children}
           </main>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
@@ -45,28 +45,7 @@ import { parseTimeString } from "@/utils/time";
 import getDurationDisplay from "@/utils/durationDisplay";
 import { getDurationHours } from "@/utils/hours";
 import generateBookingCode from "@/utils/generateBookingCode";
-
-// Initial state
-const initialState = {
-  step: 1,
-  booking: null,
-  bookingId: null,
-  selectedDate: null,
-  startTime: null,
-  endTime: null,
-  bookingsForDate: [],
-  availableSlots: [],
-  fullName: "",
-  email: "",
-  phone: "",
-  playerType: "solo",
-  teamMode: "private",
-  players: "1",
-  notes: "",
-  promoCode: "",
-  discountApplied: 0,
-  errorMessage: "",
-};
+import { useBooking } from "@/context/BookingContext";
 
 function normalizeTeamMode(value) {
   const normalized = String(value || "private")
@@ -88,57 +67,8 @@ function getBookingTypeLabel({ playerType, teamMode }) {
     : "Private booking";
 }
 
-// ✅ Reducer
-function bookingReducer(state, action) {
-  switch (action.type) {
-    case "SET_START_TIME":
-      return { ...state, startTime: action.start };
-    case "SET_END_TIME":
-      return { ...state, endTime: action.end };
-    case "SET_DATE":
-      return {
-        ...state,
-        selectedDate: action.date,
-        startTime: null,
-        endTime: null,
-        errorMessage: "",
-      };
-    case "SET_USER":
-      return { ...state, ...action.payload };
-    case "SET_STEP":
-      return { ...state, step: action.step };
-    case "SET_PROMO":
-      return {
-        ...state,
-        promoCode: action.code,
-        discountApplied: action.discount,
-      };
-    case "SET_BOOKINGS":
-      return {
-        ...state,
-        bookingsForDate: action.bookings,
-        availableSlots: action.slots,
-      };
-    case "CONFIRM_BOOKING":
-      return {
-        ...state,
-        bookingId: action.id,
-        booking: action.booking,
-        step: 4,
-      };
-
-    case "SET_ERROR":
-      return { ...state, errorMessage: action.message, step: state.step - 1 };
-    case "RESET":
-      return initialState;
-
-    default:
-      return state;
-  }
-}
-
 export default function Booking() {
-  const [state, dispatch] = useReducer(bookingReducer, initialState);
+  const { state, dispatch } = useBooking();
   const [isConfirming, setIsConfirming] = useState(false);
   const [livePricing, setLivePricing] = useState(DEFAULT_PRICING);
 
@@ -208,7 +138,7 @@ export default function Booking() {
       .catch((error) => {
         console.error("Could not load booking availability:", error);
       });
-  }, [state.selectedDate]);
+  }, [state.selectedDate, dispatch]);
 
   async function confirmBooking() {
     if (!state.selectedDate || !state.startTime || !state.endTime) return;
@@ -704,7 +634,7 @@ export default function Booking() {
               </button>
               <button
                 type="submit"
-                className="flex items-center gap-2 rounded-lg border border-(--primary) bg-(--primary) px-8 py-3 text-xs text-white shadow-sm transition-all duration-300 ease-out hover:translate-x-1 hover:shadow-md"
+                className="flex items-center gap-2 rounded-lg border border-(--primary) bg-(--primary) px-8 py-3 text-xs text-white shadow-sm transition-all duration-300 ease-out hover:translate-x-1 hover:shadow-md cursor-pointer"
               >
                 Review Booking
                 <ChevronRight

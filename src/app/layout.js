@@ -3,6 +3,7 @@ import "./globals.css";
 import HeaderWrapper from "./components/HeadWrapper";
 import SiteLayout from "./(site)/layout";
 import Footer from "./components/Footer";
+import { BookingProvider } from "@/context/BookingContext";
 
 const kanit = localFont({
   src: [
@@ -35,11 +36,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${kanit.variable} h-full antialiased `}>
       <body className="flex flex-col min-h-screen">
-        <a href="#main-content" className="sr-only focus:not-sr-only "></a>
-        <header>
-          <HeaderWrapper />
-        </header>
-        {children}
+        <BookingProvider>
+          <a href="#main-content" className="sr-only focus:not-sr-only "></a>
+          <header>
+            <HeaderWrapper />
+          </header>
+          {children}
+        </BookingProvider>
       </body>
     </html>
   );

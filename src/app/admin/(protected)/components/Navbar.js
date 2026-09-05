@@ -10,6 +10,7 @@ import {
   FaChartBar,
   FaCog,
   FaMoneyBillWave,
+  FaPlus,
   FaRegCalendarAlt,
   FaSignOutAlt,
   FaTachometerAlt,
@@ -38,12 +39,14 @@ export default function Navbar() {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
+  const [quickNavOpen, setQuickNavOpen] = useState(false);
 
   function handleNavigation(href) {
     if (href === pathname) return;
 
     setMobileNavOpen(false);
     setMoreSheetOpen(false);
+    setQuickNavOpen(false);
     router.push(href);
   }
 
@@ -129,7 +132,31 @@ export default function Navbar() {
         )}
       </header>
 
-      <nav className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-1.25rem)] max-w-130 -translate-x-1/2 rounded-2xl border border-white/20 bg-(--forest) p-2 shadow-[0_18px_40px_rgba(13,61,47,0.35)] md:hidden">
+      {/* Floating toggle button — always sits above the quick-nav pill */}
+      <button
+        type="button"
+        onClick={() => setQuickNavOpen((v) => !v)}
+        aria-expanded={quickNavOpen}
+        aria-controls="quick-nav-pill"
+        aria-label={
+          quickNavOpen ? "Close quick navigation" : "Open quick navigation"
+        }
+        className={`floating-main-btn  fixed right-3 z-60 flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-white bg-(--forest) text-white transition-[bottom,transform] duration-300 md:hidden ${
+          quickNavOpen ? "bottom-27 rotate-45" : "bottom-5 rotate-0"
+        }`}
+      >
+        <FaPlus size={20} aria-hidden="true" />
+      </button>
+
+      {/* Quick-nav pill — hidden by default, only takes visual space when opened */}
+      <nav
+        id="quick-nav-pill"
+        className={`fixed bottom-4 left-1/2 z-40 w-[calc(100%-1.25rem)] max-w-130 -translate-x-1/2 rounded-2xl border border-white/20 bg-(--forest) p-2 shadow-[0_18px_40px_rgba(13,61,47,0.35)] transition-all duration-300 md:hidden ${
+          quickNavOpen
+            ? "translate-y-0 opacity-100 pointer-events-auto"
+            : "translate-y-6 opacity-0 pointer-events-none"
+        }`}
+      >
         <div className="grid grid-cols-3 gap-1">
           {PRIMARY_LINKS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
@@ -147,7 +174,10 @@ export default function Navbar() {
           })}
           <button
             type="button"
-            onClick={() => setMoreSheetOpen(true)}
+            onClick={() => {
+              setQuickNavOpen(false);
+              setMoreSheetOpen(true);
+            }}
             className={`flex flex-col items-center justify-center rounded-xl px-2 py-2 text-[10px] ${pathname.startsWith("/admin/") && !PRIMARY_LINKS.some((link) => link.href === pathname) ? "bg-white/10 text-white" : "text-white/70"}`}
           >
             <FaBars size={14} />

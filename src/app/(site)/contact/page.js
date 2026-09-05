@@ -19,20 +19,20 @@ export const metadata = {
 
 function Page() {
   return (
-    <section className="w-full flex-col gap-10 pb-20">
+    <section className="w-full flex flex-col gap-10 pb-20">
       <SectionBanner backgroundImage="/images/diffPitch.webp">
         <div className="flex flex-col gap-3">
-          <h2 className="text-white font-extrabold text-3xl sm:text-4xl md:text-5xl tracking-tight drop-shadow-lg">
+          <h2 className="text-white text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.1] drop-shadow-lg">
             Contact Us
           </h2>
-          <p className="text-white/90 text-base sm:text-lg font-medium max-w-2xl drop-shadow-md">
+          <p className="text-white/90 text-sm sm:text-base font-semibold leading-snug drop-shadow-md">
             We&apos;d love to hear from you. Reach out for bookings, enquiries,
             and any other information.
           </p>
         </div>
       </SectionBanner>
 
-      <div className="w-[90%] max-w-7xl mx-auto flex flex-col gap-16 ">
+      <div className="w-[90%] max-w-7xl mx-auto flex flex-col gap-12 ">
         <Reveal>
           {/* 1. Contact Info + Form */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">

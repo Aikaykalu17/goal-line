@@ -68,7 +68,6 @@ export default function BookingsPage() {
   const [actioningId, setActioningId] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  console.log(bookings);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   useEffect(() => {

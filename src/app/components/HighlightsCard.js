@@ -1,11 +1,11 @@
 function HighlightsCard({ icon: Icon, title, description }) {
   return (
     <div
-      className="flex flex-col gap-3 p-5 rounded-xl border-(--border)/40 bg-(--bg)/70 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1
+      className="flex flex-col gap-3 p-5 rounded-xl border-(--border)/40 bg-(--bg)/70 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1
                     landscape:sm:flex-row landscape:sm:items-center landscape:sm:gap-4
                     md:flex-col md:items-start"
     >
-      <div className="shrink-0 rounded-xl p-3 bg-(--primary-dark)/10">
+      <div className="shrink-0 rounded-xl p-3 bg-(--primary-dark)/10 w-fit">
         <Icon
           size={28}
           color="var(--primary-dark)"
@@ -18,7 +18,7 @@ function HighlightsCard({ icon: Icon, title, description }) {
         <h3 className="font-semibold text-base md:text-lg text-(--text) leading-snug">
           {title}
         </h3>
-        <p className="text-sm text-(--muted) leading-relaxed">{description}</p>
+        <p className="text-sm text-(--muted) leading-6">{description}</p>
       </div>
     </div>
   );

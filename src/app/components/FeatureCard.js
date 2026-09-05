@@ -5,7 +5,7 @@ function FeatureCard({ icon: Icon, title, description }) {
                     rounded-xl border border-(--border)/40 bg-(--bg)/70 backdrop-blur-sm 
                     shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1
                     landscape:sm:flex-row landscape:sm:text-left landscape:sm:items-start landscape:sm:gap-4
-                    md:p-5"
+                    md:p-4"
     >
       <div className="shrink-0 rounded-lg p-2.5 bg-(--primary)/10">
         <Icon
